@@ -25,6 +25,8 @@ import * as Schema from "effect/Schema";
 import * as HostProcess from "@t3tools/shared/HostProcess";
 
 import * as ServerConfig from "../config.ts";
+import * as BrainMemory from "../brain/BrainMemory.ts";
+import { retrievableHandoffs } from "../brain/handoffHistory.ts";
 import { withWorkspaceLease } from "../workspace/workspaceLease.ts";
 import * as GitWorkflowService from "../git/GitWorkflowService.ts";
 import * as ProjectService from "../project/ProjectService.ts";
@@ -105,6 +107,7 @@ export const layer: Layer.Layer<
   ProviderTurnStartServiceV2,
   Effect.gen(function* () {
     const eventSink = yield* EventSink.EventSinkV2;
+    const brainMemory = yield* Effect.serviceOption(BrainMemory.BrainMemory);
     const contextHandoffService = yield* ContextHandoffService.ContextHandoffServiceV2;
     const idAllocator = yield* IdAllocator.IdAllocatorV2;
     const fileSystem = yield* FileSystem.FileSystem;
@@ -931,10 +934,44 @@ export const layer: Layer.Layer<
       const routableSubagents = projection.subagents.filter((subagent) =>
         RunExecutionService.canRouteRelatedSubagent(subagent.status),
       );
-      const userText = projectComposerContextForProvider({
+      const projectedUserText = projectComposerContextForProvider({
         text: message.text,
         records: message.context?.records ?? [],
       });
+      const needsBrainContext =
+        !sameSelection ||
+        effectiveHandoffs.length > 0 ||
+        /^\/(rag|graphify|graphiphy)(?:\s|$)/i.test(message.text.trimStart());
+      const brainItems =
+        Option.isSome(brainMemory) && needsBrainContext
+          ? (yield* projectionStore
+              .getThreadRecords(input.threadId, ["turnItems"], {
+                turnItemTypes: [
+                  "user_message",
+                  "assistant_message",
+                  "file_change",
+                  "proposed_plan",
+                ],
+              })
+              .pipe(Effect.mapError((cause) => new ProviderTurnStartError({ runId, cause }))))
+              .turnItems
+          : projection.turnItems;
+      const brainContext = Option.isSome(brainMemory)
+        ? yield* brainMemory.value
+            .prepare({
+              threadId: input.threadId,
+              text: message.text,
+              switching: !sameSelection || effectiveHandoffs.length > 0,
+              items: brainItems,
+            })
+            .pipe(Effect.mapError((cause) => new ProviderTurnStartError({ runId, cause })))
+        : { text: projectedUserText, context: "" };
+      const userText = Option.isSome(brainMemory)
+        ? projectComposerContextForProvider({
+            text: brainContext.text,
+            records: message.context?.records ?? [],
+          })
+        : projectedUserText;
       // Delivered once: this run's provider turn marks the work as told. A
       // restart continuation is prompted by its own text or resumes natively.
       const noteContinuation = isRestartNoteContinuation(
@@ -1099,14 +1136,18 @@ export const layer: Layer.Layer<
                   }),
                 ];
           const delivery = yield* deliverContextHandoffs({
-            handoffs: [...effectiveHandoffs, ...retryHandoff],
+            handoffs: Option.isSome(brainMemory)
+              ? retrievableHandoffs([...effectiveHandoffs, ...retryHandoff])
+              : [...effectiveHandoffs, ...retryHandoff],
             deferInline: compact,
             providerThread: runningProviderThread,
             budget: Effect.gen(function* () {
               return handoffBudget({
                 tokenCap,
                 modelContextWindow,
-                userText: restartNote === "" ? userText : `${restartNote}\n\n${userText}`,
+                userText: [brainContext.context, restartNote, userText]
+                  .filter(Boolean)
+                  .join("\n\n"),
                 attachments: message.attachments,
                 providerThread: budgetProviderThread,
                 nativeContextEstimate:
@@ -1147,7 +1188,7 @@ export const layer: Layer.Layer<
           });
           if (!(yield* isCurrentAttemptInStatus("running"))) return;
           const start = compact ? session.compactThread! : session.startTurn;
-          const context = [delivery.context, restartNote]
+          const context = [delivery.context, brainContext.context, restartNote]
             .filter((part) => part !== "")
             .join("\n\n");
           const { restartContinuationOfRunId: _resumedRunId, ...promptedInput } = turnInput;

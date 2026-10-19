@@ -696,7 +696,9 @@ const layerMakeRoutes = Layer.mergeAll(
     ServerHttp.layerStaticAndDevRoute,
     Ws.layer,
   ),
-  McpHttpServer.layer.pipe(
+  Layer.merge(McpHttpServer.layer, McpHttpServer.layerBrainToolkit).pipe(
+    Layer.provide(RuntimeLayer.layerBrainMemory),
+    Layer.provide(BetaBrain.layer),
     Layer.provide(ProviderAdapterRegistry.layerFromProviderInstanceRegistry),
     Layer.provide(McpOAuth.layerMcpClientAuthenticator),
   ),

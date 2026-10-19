@@ -53,6 +53,8 @@ import * as ThreadForkService from "./ThreadForkService.ts";
 import * as TurnItemPositionStore from "./TurnItemPositionStore.ts";
 import * as ScheduledTaskService from "../scheduledTasks/ScheduledTaskService.ts";
 import * as SecretRequests from "../secrets/SecretRequests.ts";
+import * as BrainMemory from "../brain/BrainMemory.ts";
+import * as GraphContext from "../brain/GraphContext.ts";
 
 export const layerEventInfrastructure = Layer.mergeAll(
   OrchestrationEventStore.layer,
@@ -82,6 +84,11 @@ const layerStores = Layer.mergeAll(
 
 export const layerEventSink = EventSink.layerFromStores.pipe(Layer.provide(layerStores));
 const layerEventSinkProvided = layerEventSink;
+export const layerBrainMemory = BrainMemory.layer.pipe(
+  Layer.provide(
+    Layer.mergeAll(layerEventStoreProvided, layerEventSinkProvided, GraphContext.layer),
+  ),
+);
 const layerProjectionMaintenanceProvided = ProjectionMaintenance.layer.pipe(
   Layer.provide(layerStores),
 );
@@ -163,6 +170,7 @@ const layerRunExecutionServiceProvided = RunExecutionService.layer.pipe(
 const layerProviderTurnStartServiceProvided = ProviderTurnStartService.layer.pipe(
   Layer.provide(
     Layer.mergeAll(
+      layerBrainMemory,
       layerContextHandoffServiceProvided,
       layerEventSinkProvided,
       IdAllocator.layer,

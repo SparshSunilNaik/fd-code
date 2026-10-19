@@ -2637,6 +2637,20 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
     if (composerTrigger.kind === "slash-command") {
       const builtInSlashCommandItems = [
         {
+          id: "slash:rag",
+          type: "slash-command",
+          command: "rag",
+          label: "/rag",
+          description: "Retrieve Brain session history and Graphify context",
+        },
+        {
+          id: "slash:graphify",
+          type: "slash-command",
+          command: "graphify",
+          label: "/graphify",
+          description: "Traverse the local Brain graph for this question",
+        },
+        {
           id: "slash:model",
           type: "slash-command",
           command: "model",
@@ -3783,6 +3797,18 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
       return;
     }
     if (item.type === "slash-command") {
+      if (item.command === "rag" || item.command === "graphify") {
+        const applied = applyPromptReplacement(
+          trigger.rangeStart,
+          trigger.rangeEnd,
+          `/${item.command} `,
+          {
+            expectedText: snapshot.value.slice(trigger.rangeStart, trigger.rangeEnd),
+          },
+        );
+        if (applied) setComposerHighlightedItemId(null);
+        return;
+      }
       if (item.command === "model") {
         const applied = applyPromptReplacement(trigger.rangeStart, trigger.rangeEnd, "", {
           expectedText: snapshot.value.slice(trigger.rangeStart, trigger.rangeEnd),

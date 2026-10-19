@@ -1,5 +1,11 @@
 # T3 Code
 
+This is Faheem's Alpha source fork of [T3 Code](https://github.com/pingdotgg/t3code), with native
+local Brain continuity, mid-session model switching, and `/rag` / `/graphify` context retrieval.
+See [Brain and provider handoffs](docs/user/portable-handoffs.md#local-brain-context-in-this-fork)
+for usage and local prerequisites. Use the [development setup](docs/operations/development.md)
+to build this source; the upstream installers below install the official release.
+
 T3 Code is an "agent harness control surface". It enables control of the agents on your machine with a best-in-class mobile app ([iOS](https://apps.apple.com/us/app/t3-code-remote-claude-more/id6787819824), [Android](https://play.google.com/store/apps/details?id=com.t3tools.t3code)), [web app](https://app.t3.codes) and [Electron-based desktop app](https://t3.codes).
 
 Works with your subscriptions on Claude Code, Codex, Cursor, Grok Build, OpenCode, and Google Antigravity. If they're set up on your computer, T3 Code can control them.

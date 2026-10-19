@@ -95,6 +95,8 @@ function resolveDesktopAppStageLabel(input: {
     return "Dev";
   }
 
+  if (input.appVersion.includes("-pr.brain.")) return "Alpha";
+
   return isNightlyDesktopVersion(input.appVersion) ? "Nightly" : "Beta";
 }
 

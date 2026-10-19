@@ -3536,6 +3536,7 @@ export const makeClaudeAdapterV2 = Effect.fn("makeClaudeAdapterV2")(function* (
         const steeredTurns = yield* Ref.make(new Set<OrchestrationV2ProviderTurn["id"]>());
         const queryContext = yield* Ref.make<ClaudeLiveQueryContext | null>(null);
         const openedNativeThreads = yield* Ref.make(new Set<string>());
+        const resumedNativeThreads = yield* Ref.make(new Set<string>());
         const latestPlanByKind = yield* Ref.make(new Map<string, OrchestrationV2PlanArtifact>());
         // Claude 5 task tools edit one list per native session, across turns.
         const taskListsByNativeThread = yield* Ref.make(new Map<string, ClaudeTaskList>());
@@ -8516,7 +8517,10 @@ export const makeClaudeAdapterV2 = Effect.fn("makeClaudeAdapterV2")(function* (
           const hasPersistedProviderTurn =
             turnInput.nativeThreadHasTurns ?? turnInput.providerTurnOrdinal > 1;
           const shouldResume =
-            resumeSessionAt !== undefined || openedWithResume || hasPersistedProviderTurn;
+            resumeSessionAt !== undefined ||
+            openedWithResume ||
+            (yield* Ref.get(resumedNativeThreads)).has(nativeThreadId) ||
+            hasPersistedProviderTurn;
           const queryOptions = makeClaudeQueryOptions({
             modelSelection: turnInput.modelSelection,
             nativeThreadId,
@@ -9259,6 +9263,13 @@ export const makeClaudeAdapterV2 = Effect.fn("makeClaudeAdapterV2")(function* (
                   driver: CLAUDE_PROVIDER,
                   detail: `Claude session ${nativeThreadId} has no conversation to resume.`,
                 });
+              }
+              // Imported native histories have no T3 provider turns yet, but their
+              // existing Claude session must be resumed rather than created again.
+              if (nativeThreadId !== undefined && nativeThreadId !== null) {
+                yield* Ref.update(resumedNativeThreads, (current) =>
+                  new Set(current).add(nativeThreadId),
+                );
               }
               const updatedAt = yield* DateTime.now;
               return {

@@ -2139,7 +2139,11 @@ describe("ClaudeAdapterV2 MCP credential channel", () => {
 });
 
 describe("ClaudeAdapterV2 native session identity", () => {
-  const openTurnWithOrdinal = (providerTurnOrdinal: number, nativeThreadHasTurns?: boolean) =>
+  const openTurnWithOrdinal = (
+    providerTurnOrdinal: number,
+    nativeThreadHasTurns?: boolean,
+    imported = false,
+  ) =>
     Effect.scoped(
       Effect.gen(function* () {
         const fileSystem = yield* FileSystem.FileSystem;
@@ -2151,7 +2155,7 @@ describe("ClaudeAdapterV2 native session identity", () => {
         const adapter = yield* ClaudeAdapterV2.makeClaudeAdapterV2({
           instanceId: ClaudeAdapterV2.CLAUDE_DEFAULT_INSTANCE_ID,
           settings: DEFAULT_CLAUDE_SETTINGS,
-          environment: {},
+          environment: { CLAUDE_CONFIG_DIR: attachmentsDir },
           attachmentsDir,
           fileSystem,
           path: yield* Path.Path,
@@ -2187,11 +2191,21 @@ describe("ClaudeAdapterV2 native session identity", () => {
           modelSelection: CLAUDE_TEST_MODEL_SELECTION,
           runtimePolicy: CLAUDE_TEST_RUNTIME_POLICY,
         });
-        const providerThread = yield* runtime.ensureThread({
+        let providerThread = yield* runtime.ensureThread({
           threadId,
           modelSelection: CLAUDE_TEST_MODEL_SELECTION,
           runtimePolicy: CLAUDE_TEST_RUNTIME_POLICY,
         });
+        if (imported) {
+          const path = yield* Path.Path;
+          const project = path.join(attachmentsDir, "projects", "-workspace");
+          yield* fileSystem.makeDirectory(project, { recursive: true });
+          yield* fileSystem.writeFileString(
+            path.join(project, "native-session-identity.jsonl"),
+            '{"type":"user","message":{"role":"user","content":"prior native history"}}\n',
+          );
+          providerThread = yield* runtime.resumeThread({ providerThread });
+        }
         const now = yield* DateTime.now;
         yield* runtime.startTurn(
           makeClaudeTestTurnInput({
@@ -2231,6 +2245,14 @@ describe("ClaudeAdapterV2 native session identity", () => {
         assert.equal(openedQueries[0]?.options.resume, "native-session-identity");
         assert.equal(openedQueries[0]?.options.sessionId, undefined);
       }),
+  );
+
+  it.effect("resumes an imported native history before its first T3 provider turn", () =>
+    Effect.gen(function* () {
+      const openedQueries = yield* openTurnWithOrdinal(1, false, true);
+      assert.equal(openedQueries[0]?.options.resume, "native-session-identity");
+      assert.equal(openedQueries[0]?.options.sessionId, undefined);
+    }),
   );
 
   it.effect("creates a fresh native session despite earlier provider-thread turns", () =>

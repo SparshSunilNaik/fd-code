@@ -207,3 +207,15 @@ it.effect("keys terminal failure items by provider turn across retries and fallb
     assert.equal(firstAttempt.ordinal, 101);
   }).pipe(Effect.provide(IdAllocator.layer)),
 );
+
+it("gives Claude SDK stream failures actionable text without exposing their cause", () => {
+  const failure = makeProviderFailure({
+    cause: Cause.fail({
+      _tag: "ClaudeAgentSdkQueryRunnerError",
+      method: "fromAsyncIterable",
+      cause: new Error("Bearer private-session-secret"),
+    }),
+  });
+  assert.include(failure.message, "Claude Code exited before finishing");
+  assert.notInclude(failure.message, "private-session-secret");
+});

@@ -49,6 +49,8 @@ function causeMessage(cause: unknown): string | undefined {
           return stringField(cause, "message");
         case "ContextHandoffDeliveryUncertainError":
           return "T3 could not confirm whether conversation history reached the provider. Retry the turn to recover the session.";
+        case "ClaudeAgentSdkQueryRunnerError":
+          return "Claude Code exited before finishing the turn. Retry; if it repeats, check Claude Code's sign-in and CLI installation.";
         case "ProviderAdapterTurnStartError":
           message =
             "The provider could not start this turn. Retry the turn; if it keeps failing, check the provider setup and server logs.";

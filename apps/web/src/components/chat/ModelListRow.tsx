@@ -90,6 +90,7 @@ export const ModelListRow = memo(function ModelListRow(props: {
           <div className="mt-1 flex items-center gap-1.5">
             <ProviderInstanceIcon
               driverKind={props.driverKind}
+              instanceId={props.instanceId}
               displayName={props.providerDisplayName}
               acpRegistryAgentId={props.acpRegistryAgentId}
               acpRegistryIconUrl={props.acpRegistryIconUrl}

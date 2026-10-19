@@ -56,6 +56,12 @@ export const OpenCodeSettings = makeProviderSettingsSchema(
       Schema.withDecodingDefault(Effect.succeed([])),
       Schema.annotateKey({ providerSettingsForm: { hidden: true } }),
     ),
+    // OpenCode upstream provider ids (e.g. "huggingface") this instance lists.
+    // Empty lists every connected upstream, which is the default instance's shape.
+    upstreamProviders: Schema.Array(TrimmedString).pipe(
+      Schema.withDecodingDefault(Effect.succeed([])),
+      Schema.annotateKey({ providerSettingsForm: { hidden: true } }),
+    ),
   },
   {
     order: ["binaryPath", "serverUrl", "serverPassword"],

@@ -2,8 +2,8 @@ import { type CSSProperties, memo } from "react";
 
 import { providerInstanceInitials } from "@t3tools/client-runtime/state/provider-instance-display";
 
-import { ProviderDriverKind } from "@t3tools/contracts";
-import { AntigravityIcon, ClaudeAI, Icon, OpenAI } from "../Icons";
+import { ProviderDriverKind, ProviderInstanceId } from "@t3tools/contracts";
+import { AntigravityIcon, ClaudeAI, HuggingFaceIcon, Icon, OpenAI } from "../Icons";
 
 import { cn } from "~/lib/utils";
 import { providerClients } from "../settings/providerDriverMeta";
@@ -18,6 +18,12 @@ const PROVIDER_ICON_BY_PROVIDER: Partial<Record<ProviderDriverKind, Icon>> = {
   [ProviderDriverKind.make("codex")]: OpenAI,
   [ProviderDriverKind.make("claudeAgent")]: ClaudeAI,
   [ProviderDriverKind.make("antigravity")]: AntigravityIcon,
+};
+
+// Instances that front one upstream (an OpenCode instance scoped to Hugging Face)
+// show that upstream's mark instead of the driver's.
+const PROVIDER_ICON_BY_INSTANCE_ID: Partial<Record<ProviderInstanceId, Icon>> = {
+  [ProviderInstanceId.make("huggingface")]: HuggingFaceIcon,
 };
 
 const PROVIDER_TEXT_COLOR_BY_PROVIDER: Partial<Record<ProviderDriverKind, string>> = {
@@ -55,6 +61,7 @@ export function resolveProviderInstanceAcpRegistryIconUrl(input: {
 
 export const ProviderInstanceIcon = memo(function ProviderInstanceIcon(props: {
   driverKind: ProviderDriverKind;
+  instanceId?: ProviderInstanceId | undefined;
   displayName: string;
   accentColor?: string | undefined;
   acpRegistryAgentId?: string | undefined;
@@ -68,6 +75,8 @@ export const ProviderInstanceIcon = memo(function ProviderInstanceIcon(props: {
   indicatorBackground?: string;
 }) {
   const Icon = PROVIDER_ICON_BY_PROVIDER[props.driverKind] ?? null;
+  const InstanceIcon =
+    props.instanceId !== undefined ? (PROVIDER_ICON_BY_INSTANCE_ID[props.instanceId] ?? null) : null;
   const packageIcon = providerClients.get(props.driverKind)?.icon;
   const indicatorBackground = props.indicatorBackground ?? "var(--card)";
   const accentStyle = props.accentColor
@@ -96,6 +105,8 @@ export const ProviderInstanceIcon = memo(function ProviderInstanceIcon(props: {
           fallbackClassName="size-full"
           icon={acpRegistryIconUrl}
         />
+      ) : InstanceIcon ? (
+        <InstanceIcon className={cn("size-5 shrink-0", props.iconClassName)} aria-hidden />
       ) : packageIcon ? (
         <ProviderPackageIcon
           icon={packageIcon}

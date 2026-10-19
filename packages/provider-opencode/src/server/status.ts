@@ -245,14 +245,23 @@ function openCodeCapabilitiesForModel(input: {
   });
 }
 
+/** Whether an instance scoped with `upstreamProviders` lists this OpenCode provider. */
+export function allowsUpstreamProvider(
+  upstreamProviders: ReadonlyArray<string>,
+  providerID: string,
+): boolean {
+  return upstreamProviders.length === 0 || upstreamProviders.includes(providerID);
+}
+
 function flattenOpenCodeModels(
   input: OpenCodeRuntime.OpenCodeInventory,
+  upstreamProviders: ReadonlyArray<string> = [],
 ): ReadonlyArray<ServerProviderModel> {
   const connected = new Set(input.providerList.connected);
   const models: Array<ServerProviderModel> = [];
 
   for (const provider of input.providerList.all) {
-    if (!connected.has(provider.id)) {
+    if (!connected.has(provider.id) || !allowsUpstreamProvider(upstreamProviders, provider.id)) {
       continue;
     }
 
@@ -546,6 +555,7 @@ const checkOpenCode2 = Effect.fn("checkOpenCode2")(function* (
   }
   const models = providerModelsFromSettings(
     result.value
+      .filter((model) => allowsUpstreamProvider(settings.upstreamProviders, model.providerID))
       .map((model) => {
         const subProvider = subProviderLabelFor(model);
         return {
@@ -716,7 +726,7 @@ export const checkOpenCodeProviderStatus = Effect.fn("checkOpenCodeProviderStatu
   version = inventoryExit.value.version;
 
   const models = providerModelsFromSettings(
-    flattenOpenCodeModels(inventoryExit.value.inventory),
+    flattenOpenCodeModels(inventoryExit.value.inventory, openCodeSettings.upstreamProviders),
     customModels,
     DEFAULT_OPENCODE_MODEL_CAPABILITIES,
   );

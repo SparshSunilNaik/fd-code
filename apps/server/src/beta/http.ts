@@ -13,17 +13,18 @@ import { BetaBrain } from "./Brain.ts";
 import { createArtsieClient } from "./ArtsieClient.ts";
 
 // Reading the workspace is a filesystem read and changing it a filesystem write. Actions
-// that open apps, a native picker or Finder on the host need the owner-level scope.
+// that start editor processes (tools starts a headless or live session) or open apps,
+// a native picker or Finder on the host need the owner-level scope.
 const artsieScope = (action: BetaArtsieInput["action"]) => {
   switch (action) {
     case "apps":
     case "files":
-    case "tools":
       return AuthFilesystemReadScope;
     case "mkdir":
     case "copy":
     case "rename":
       return AuthFilesystemWriteScope;
+    case "tools":
     case "import":
     case "launch":
     case "start_live":

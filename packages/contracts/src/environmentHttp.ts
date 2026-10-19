@@ -1,4 +1,5 @@
 import * as Context from "effect/Context";
+import { BetaArtsieInput, BetaBrainCallInput, BetaBrainResponse } from "./beta.ts";
 import type * as DateTime from "effect/DateTime";
 import * as Schema from "effect/Schema";
 import * as HttpApi from "effect/http-api/HttpApi";
@@ -750,6 +751,31 @@ class EnvironmentWebhooksHttpApi extends HttpApiGroup.make("webhooks")
   .add(HttpApiEndpoint.patch("webhookPatch", WEBHOOK_PATH, webhookEndpoint))
   .add(HttpApiEndpoint.get("webhookGet", WEBHOOK_PATH, webhookEndpoint)) {}
 
+class EnvironmentBetaHttpApi extends HttpApiGroup.make("beta")
+  .add(
+    HttpApiEndpoint.post("artsie", "/api/beta/artsie", {
+      headers: OptionalBearerHeaders,
+      payload: BetaArtsieInput,
+      success: BetaBrainResponse,
+      error: EnvironmentScopedOperationErrors,
+    }).middleware(EnvironmentAuthenticatedAuth),
+  )
+  .add(
+    HttpApiEndpoint.get("brainHealth", "/api/beta/brain/health", {
+      headers: OptionalBearerHeaders,
+      success: BetaBrainResponse,
+      error: EnvironmentScopedOperationErrors,
+    }).middleware(EnvironmentAuthenticatedAuth),
+  )
+  .add(
+    HttpApiEndpoint.post("brainCall", "/api/beta/brain/call", {
+      headers: OptionalBearerHeaders,
+      payload: BetaBrainCallInput,
+      success: BetaBrainResponse,
+      error: EnvironmentScopedOperationErrors,
+    }).middleware(EnvironmentAuthenticatedAuth),
+  ) {}
+
 export class EnvironmentHttpApi extends HttpApi.make("environment")
   .add(EnvironmentMetadataHttpApi)
   .add(EnvironmentAuthHttpApi)
@@ -758,4 +784,5 @@ export class EnvironmentHttpApi extends HttpApi.make("environment")
   .add(EnvironmentPullRequestsHttpApi)
   .add(EnvironmentProjectsHttpApi)
   .add(EnvironmentConnectHttpApi)
-  .add(EnvironmentWebhooksHttpApi) {}
+  .add(EnvironmentWebhooksHttpApi)
+  .add(EnvironmentBetaHttpApi) {}

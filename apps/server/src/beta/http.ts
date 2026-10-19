@@ -1,6 +1,9 @@
 import {
-  AuthOrchestrationOperateScope,
+  AuthEnvironmentMaintainScope,
+  AuthFilesystemReadScope,
+  AuthFilesystemWriteScope,
   AuthOrchestrationReadScope,
+  type BetaArtsieInput,
   EnvironmentHttpApi,
 } from "@t3tools/contracts";
 import * as Effect from "effect/Effect";
@@ -8,6 +11,26 @@ import * as HttpApiBuilder from "effect/http-api/HttpApiBuilder";
 import { annotateEnvironmentRequest, requireEnvironmentScope } from "../auth/http.ts";
 import { BetaBrain } from "./Brain.ts";
 import { createArtsieClient } from "./ArtsieClient.ts";
+
+// Reading the workspace is a filesystem read and changing it a filesystem write. Actions
+// that open apps, a native picker or Finder on the host need the owner-level scope.
+const artsieScope = (action: BetaArtsieInput["action"]) => {
+  switch (action) {
+    case "apps":
+    case "files":
+    case "tools":
+      return AuthFilesystemReadScope;
+    case "mkdir":
+    case "copy":
+    case "rename":
+      return AuthFilesystemWriteScope;
+    case "import":
+    case "launch":
+    case "start_live":
+    case "reveal":
+      return AuthEnvironmentMaintainScope;
+  }
+};
 
 export const layer = HttpApiBuilder.group(
   EnvironmentHttpApi,
@@ -20,11 +43,7 @@ export const layer = HttpApiBuilder.group(
         "artsie",
         Effect.fn("beta.artsie")(function* (args) {
           yield* annotateEnvironmentRequest(args.endpoint.name);
-          yield* requireEnvironmentScope(
-            args.payload.action === "apps" || args.payload.action === "files"
-              ? AuthOrchestrationReadScope
-              : AuthOrchestrationOperateScope,
-          );
+          yield* requireEnvironmentScope(artsieScope(args.payload.action));
           return yield* Effect.promise(() => artsie(args.payload));
         }),
       )
@@ -40,7 +59,8 @@ export const layer = HttpApiBuilder.group(
         "brainCall",
         Effect.fn("beta.brainCall")(function* (args) {
           yield* annotateEnvironmentRequest(args.endpoint.name);
-          yield* requireEnvironmentScope(AuthOrchestrationOperateScope);
+          // Brain calls reach private records and the agent bus: owner-level only.
+          yield* requireEnvironmentScope(AuthEnvironmentMaintainScope);
           return yield* brain.call(args.payload);
         }),
       );

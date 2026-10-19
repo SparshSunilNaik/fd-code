@@ -98,19 +98,45 @@ export const BetaBrainResponse = Schema.Union([
 ]);
 export type BetaBrainResponse = typeof BetaBrainResponse.Type;
 
-export const BetaArtsieInput = Schema.Struct({
-  action: Schema.Literals([
-    "apps",
-    "files",
-    "launch",
-    "tools",
-    "start_live",
-    "import",
-    "mkdir",
-    "copy",
-    "rename",
-    "reveal",
-  ]),
-  args: Schema.Record(Schema.String, Schema.Unknown),
-});
+// A workspace-relative path: the ARTsie hub resolves it under its workspace, and this
+// shape keeps absolute paths, traversal and odd separators from ever being forwarded.
+export const ArtsieWorkspacePath = Schema.String.check(
+  Schema.isMaxLength(512),
+  Schema.makeFilter(
+    (path) =>
+      !path.startsWith("/") &&
+      !path.includes("\\") &&
+      !path.includes("\u0000") &&
+      !path.split("/").includes(".."),
+    { expected: "a path inside the ARTsie workspace" },
+  ),
+);
+export const ArtsieAppId = Schema.String.check(Schema.isPattern(/^[a-z0-9][a-z0-9-]{0,39}$/));
+// Decoding drops unknown keys from objects with fields but keeps them on an empty object,
+// so each object also checks its own key set: nothing undeclared reaches the hub.
+const onlyKeys = (allowed: ReadonlyArray<string>) =>
+  Schema.makeFilter((value: object) => Object.keys(value).every((key) => allowed.includes(key)), {
+    expected: `only the keys ${allowed.join(", ") || "(none)"}`,
+  });
+const artsieAction = <A extends string, F extends Schema.Struct.Fields>(action: A, args: F) =>
+  Schema.Struct({
+    action: Schema.Literal(action),
+    args: Schema.Struct(args).check(onlyKeys(Object.keys(args))),
+  }).check(onlyKeys(["action", "args"]));
+// Each action carries only its own fields.
+export const BetaArtsieInput = Schema.Union([
+  artsieAction("apps", {}),
+  artsieAction("files", { path: Schema.optional(ArtsieWorkspacePath) }),
+  artsieAction("tools", {
+    app: ArtsieAppId,
+    mode: Schema.optional(Schema.Literals(["headless", "live"])),
+  }),
+  artsieAction("mkdir", { path: ArtsieWorkspacePath }),
+  artsieAction("copy", { source: ArtsieWorkspacePath, target: ArtsieWorkspacePath }),
+  artsieAction("rename", { source: ArtsieWorkspacePath, target: ArtsieWorkspacePath }),
+  artsieAction("import", { folder: Schema.optional(Schema.Boolean) }),
+  artsieAction("launch", { app: ArtsieAppId, path: Schema.optional(ArtsieWorkspacePath) }),
+  artsieAction("start_live", { app: ArtsieAppId }),
+  artsieAction("reveal", { path: Schema.optional(ArtsieWorkspacePath) }),
+]);
 export type BetaArtsieInput = typeof BetaArtsieInput.Type;

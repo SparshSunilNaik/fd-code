@@ -40,7 +40,10 @@ describe("ARTsie host connection", () => {
       return Response.json({});
     });
     // Exercise the runtime boundary as well as the wire schema.
-    const result = await client({ action: "call" as "tools", args: { tool: "anything" } });
+    const result = await client({
+      action: "call" as "tools",
+      args: { tool: "anything" } as unknown as { app: string },
+    });
     expect(result).toMatchObject({ ok: false, error: { code: "not-allowed" } });
     expect(called).toBe(false);
   });

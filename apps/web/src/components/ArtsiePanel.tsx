@@ -71,7 +71,10 @@ async function request(
 ): Promise<unknown> {
   const result = await runPrimaryHttp(
     PrimaryEnvironmentHttpClient.pipe(
-      Effect.flatMap((client) => client.beta.artsie({ headers: {}, payload: { action, args } })),
+      Effect.flatMap((client) =>
+        // The server decodes this against the per-action schema and rejects anything else.
+        client.beta.artsie({ headers: {}, payload: { action, args } as BetaArtsieInput as never }),
+      ),
     ),
   );
   if (!result.ok) throw new Error(result.error.message);

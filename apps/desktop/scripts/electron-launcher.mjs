@@ -1,4 +1,4 @@
-// This file mostly exists because we want dev mode to say "T3 Code (Dev)" instead of "electron"
+// This file mostly exists because we want dev mode to say "T3 Beta (Dev)" instead of "electron"
 
 import * as NodeChildProcess from "node:child_process";
 import * as NodeFS from "node:fs";
@@ -15,12 +15,12 @@ const repoRoot = NodePath.resolve(desktopDir, "..", "..");
 const devBundleIdSuffix = NodePath.basename(repoRoot)
   .toLowerCase()
   .replaceAll(/[^a-z0-9]+/g, "");
-const APP_DISPLAY_NAME = isDevelopment ? "T3 Code (Dev)" : "T3 Code (Alpha)";
+const APP_DISPLAY_NAME = isDevelopment ? "T3 Beta (Dev)" : "T3 Beta";
 const APP_BUNDLE_ID = isDevelopment
-  ? `com.t3tools.t3code.dev.${devBundleIdSuffix || "local"}`
-  : "com.t3tools.t3code";
-const APP_PROTOCOL_SCHEMES = isDevelopment ? ["t3code-dev"] : ["t3code"];
-const LAUNCHER_VERSION = 19;
+  ? `com.faheem.t3beta.dev.${devBundleIdSuffix || "local"}`
+  : "com.faheem.t3beta";
+const APP_PROTOCOL_SCHEMES = isDevelopment ? ["t3beta-dev"] : ["t3beta"];
+const LAUNCHER_VERSION = 20;
 const developmentMacIconPngPath = NodePath.join(
   repoRoot,
   "assets",
@@ -100,7 +100,23 @@ export function resolveMacCodeSignArguments(appBundlePath) {
   return ["--force", "--deep", "--sign", "-", "--timestamp=none", appBundlePath];
 }
 
+export function stripMacLauncherSigningMetadata(appBundlePath, run = runChecked) {
+  const runtimeDir = NodePath.join(desktopDir, ".electron-runtime");
+  const expectedBundle = NodePath.join(runtimeDir, `${APP_DISPLAY_NAME}.app`);
+  if (NodePath.resolve(appBundlePath) !== expectedBundle) {
+    throw new Error(
+      "Signing metadata cleanup is restricted to the generated Beta launcher bundle.",
+    );
+  }
+  // Copied Finder metadata prevents ad-hoc signing. Remove only those two
+  // attributes from this generated copy; preserve quarantine and the source.
+  for (const attribute of ["com.apple.FinderInfo", "com.apple.ResourceFork"]) {
+    run("xattr", ["-r", "-d", attribute, appBundlePath]);
+  }
+}
+
 function signMacLauncherBundle(appBundlePath) {
+  stripMacLauncherSigningMetadata(appBundlePath);
   runChecked("codesign", resolveMacCodeSignArguments(appBundlePath));
 }
 
@@ -270,8 +286,8 @@ export function resolveMacBundleInfoPlistStrings(executableName) {
     CFBundleExecutable: executableName,
     CFBundleIconFile: "icon.icns",
     NSScreenCaptureUsageDescription:
-      "T3 Code captures the active window when you use the snapshot shortcut.",
-    NSDocumentsFolderUsageDescription: "T3 Code reads project files you open in the desktop app.",
+      "T3 Beta captures the active window when you use the snapshot shortcut.",
+    NSDocumentsFolderUsageDescription: "T3 Beta reads project files you open in the desktop app.",
   };
 }
 

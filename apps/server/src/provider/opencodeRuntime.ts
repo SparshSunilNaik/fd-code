@@ -1,3 +1,4 @@
+import * as NodeCrypto from "node:crypto";
 import * as NodeURL from "node:url";
 
 import type { ChatAttachment, ProviderApprovalDecision, RuntimeMode } from "@t3tools/contracts";
@@ -77,7 +78,8 @@ export function resolveOpenCodeServerPassword(
     : input.environment.OPENCODE_SERVER_PASSWORD;
 }
 
-const OPENCODE_SERVER_READY_PREFIX = "opencode server listening";
+// OpenCode v1 printed "opencode server listening on <url>"; v2 prints "server listening on <url>".
+const OPENCODE_SERVER_READY_PREFIXES = ["opencode server listening", "server listening"];
 const DEFAULT_OPENCODE_SERVER_TIMEOUT_MS = 30_000;
 const DEFAULT_HOSTNAME = "127.0.0.1";
 const OPENCODE_SERVER_STARTUP_MAX_OUTPUT_CHARS = 64 * 1024;
@@ -272,7 +274,7 @@ export interface OpenCodeRuntimeShape {
 
 function parseServerUrlFromOutput(output: string): string | null {
   for (const line of output.split("\n")) {
-    if (!line.startsWith(OPENCODE_SERVER_READY_PREFIX)) {
+    if (!OPENCODE_SERVER_READY_PREFIXES.some((prefix) => line.startsWith(prefix))) {
       continue;
     }
     const match = line.match(/on\s+(https?:\/\/[^\s]+)/);
@@ -670,11 +672,14 @@ const makeOpenCodeRuntime = Effect.gen(function* () {
       const timeoutMs = input.timeoutMs ?? DEFAULT_OPENCODE_SERVER_TIMEOUT_MS;
       const args = ["serve", `--hostname=${hostname}`, `--port=${port}`];
       const spawnCommand = yield* resolveCommand(input.binaryPath, args, input.environment);
-      const serverPassword = resolveOpenCodeServerPassword({
-        external: false,
-        ...(input.serverPassword !== undefined ? { serverPassword: input.serverPassword } : {}),
-        ...(input.environment !== undefined ? { environment: input.environment } : {}),
-      });
+      // OpenCode v2 invents a random password when none is set and rejects requests
+      // without it, so a server T3 spawns always gets one T3 knows.
+      const serverPassword =
+        resolveOpenCodeServerPassword({
+          external: false,
+          ...(input.serverPassword !== undefined ? { serverPassword: input.serverPassword } : {}),
+          ...(input.environment !== undefined ? { environment: input.environment } : {}),
+        }) ?? NodeCrypto.randomBytes(24).toString("base64url");
 
       const child = yield* spawner
         .spawn(

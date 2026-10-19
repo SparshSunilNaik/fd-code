@@ -1,3 +1,4 @@
+import { BrainSessions, makeBrainSessions } from "../../beta/BrainSessions.ts";
 // @effect-diagnostics nodeBuiltinImport:off
 import * as NodeFS from "node:fs";
 import * as NodeOS from "node:os";
@@ -12,6 +13,7 @@ import {
   ProviderSetupError,
 } from "@t3tools/contracts";
 import { createModelSelection } from "@t3tools/shared/model";
+import { SessionBus } from "../../beta/SessionBus.ts";
 import {
   ApprovalRequestId,
   CommandId,
@@ -168,6 +170,7 @@ describe("ProviderCommandReactor", () => {
 
   async function createHarness(input?: {
     readonly baseDir?: string;
+    readonly sessionBus?: Pick<SessionBus["Service"], "pendingContext" | "consumedContext">;
     readonly initialTitle?: string;
     readonly deferReactorStart?: boolean;
     readonly threadModelSelection?: ModelSelection;
@@ -461,6 +464,8 @@ describe("ProviderCommandReactor", () => {
       }),
     ).pipe(Layer.provide(orchestrationLayer));
     const layer = ProviderCommandReactorLive.pipe(
+      Layer.provideMerge(Layer.effect(BrainSessions, makeBrainSessions(":memory:", "test"))),
+      Layer.provide(input?.sessionBus ? Layer.mock(SessionBus, input.sessionBus) : Layer.empty),
       Layer.provideMerge(reactorOrchestrationLayer),
       Layer.provideMerge(projectionSnapshotLayer),
       Layer.provideMerge(Layer.succeed(ProviderService, service)),
@@ -2879,7 +2884,7 @@ describe("ProviderCommandReactor", () => {
   });
 
   effectIt.effect(
-    "rejects changing models after start when the provider requires a new thread",
+    "uses another Brain connection for a restricted model without creating a new chat",
     () =>
       Effect.gen(function* () {
         const harness = yield* Effect.promise(() =>
@@ -2923,32 +2928,16 @@ describe("ProviderCommandReactor", () => {
           createdAt: now,
         });
 
-        yield* Effect.promise(() =>
-          waitFor(async () => {
-            const readModel = await harness.readModel();
-            const thread = readModel.threads.find(
-              (entry) => entry.id === ThreadId.make("thread-1"),
-            );
-            return (
-              thread?.activities.some(
-                (activity) => activity.kind === "provider.turn.start.failed",
-              ) ?? false
-            );
-          }),
-        );
-
-        expect(harness.sendTurn).toHaveBeenCalledTimes(1);
-        const readModel = yield* Effect.promise(() => harness.readModel());
-        const thread = readModel.threads.find((entry) => entry.id === ThreadId.make("thread-1"));
-        expect(
-          thread?.activities.find((activity) => activity.kind === "provider.turn.start.failed"),
-        ).toMatchObject({
-          payload: {
-            detail: expect.stringContaining(
-              "cannot switch models after the conversation has started",
-            ),
-          },
+        yield* Effect.promise(() => waitFor(() => harness.sendTurn.mock.calls.length === 2));
+        expect(harness.startSession).toHaveBeenCalledTimes(2);
+        expect(harness.startSession.mock.calls[1]?.[1]).toMatchObject({
+          threadId: "thread-1",
+          ignorePersistedResumeCursor: true,
+          modelSelection: { instanceId: "codex", model: "gpt-5.1-codex" },
         });
+        expect(harness.startSession.mock.calls[1]?.[1]).not.toHaveProperty("resumeCursor");
+        const readModel = yield* Effect.promise(() => harness.readModel());
+        expect(readModel.threads).toHaveLength(1);
       }),
   );
 
@@ -3447,79 +3436,148 @@ describe("ProviderCommandReactor", () => {
     expect(thread?.session?.runtimeMode).toBe("full-access");
   });
 
-  it("rejects provider changes after a thread is already bound to a session provider", async () => {
-    const harness = await createHarness();
-    const now = "2026-01-01T00:00:00.000Z";
+  it.each(["codex", "claudeAgent"] as const)(
+    "rejects model/provider changes to %s during an active turn",
+    async (targetInstance) => {
+      const harness = await createHarness();
+      const now = "2026-01-01T00:00:00.000Z";
 
-    await Effect.runPromise(
-      harness.engine.dispatch({
-        type: "thread.turn.start",
-        commandId: CommandId.make("cmd-turn-start-provider-switch-1"),
-        threadId: ThreadId.make("thread-1"),
-        message: {
-          messageId: asMessageId("user-message-provider-switch-1"),
-          role: "user",
-          text: "first",
-          attachments: [],
-        },
-        interactionMode: DEFAULT_PROVIDER_INTERACTION_MODE,
-        runtimeMode: "approval-required",
-        createdAt: now,
-      }),
-    );
+      await Effect.runPromise(
+        harness.engine.dispatch({
+          type: "thread.turn.start",
+          commandId: CommandId.make("cmd-turn-start-provider-switch-1"),
+          threadId: ThreadId.make("thread-1"),
+          message: {
+            messageId: asMessageId("user-message-provider-switch-1"),
+            role: "user",
+            text: "first",
+            attachments: [],
+          },
+          interactionMode: DEFAULT_PROVIDER_INTERACTION_MODE,
+          runtimeMode: "approval-required",
+          createdAt: now,
+        }),
+      );
 
-    await waitFor(() => harness.startSession.mock.calls.length === 1);
-    await waitFor(() => harness.sendTurn.mock.calls.length === 1);
+      await waitFor(() => harness.startSession.mock.calls.length === 1);
+      await waitFor(() => harness.sendTurn.mock.calls.length === 1);
 
-    await Effect.runPromise(
-      harness.engine.dispatch({
-        type: "thread.turn.start",
-        commandId: CommandId.make("cmd-turn-start-provider-switch-2"),
-        threadId: ThreadId.make("thread-1"),
-        message: {
-          messageId: asMessageId("user-message-provider-switch-2"),
-          role: "user",
-          text: "second",
-          attachments: [],
-        },
-        modelSelection: {
-          instanceId: ProviderInstanceId.make("claudeAgent"),
-          model: "claude-opus-4-6",
-        },
-        interactionMode: DEFAULT_PROVIDER_INTERACTION_MODE,
-        runtimeMode: "approval-required",
-        createdAt: now,
-      }),
-    );
+      await harness.drain();
+      harness.runtimeSessions[0] = { ...harness.runtimeSessions[0]!, status: "running" };
+      await Effect.runPromise(
+        harness.engine.dispatch({
+          type: "thread.session.set",
+          commandId: CommandId.make("switch-running"),
+          threadId: ThreadId.make("thread-1"),
+          session: {
+            threadId: ThreadId.make("thread-1"),
+            status: "running",
+            providerName: "codex",
+            providerInstanceId: ProviderInstanceId.make("codex"),
+            runtimeMode: "approval-required",
+            activeTurnId: asTurnId("still-running"),
+            lastError: null,
+            updatedAt: now,
+          },
+          createdAt: now,
+        }),
+      );
 
-    await waitFor(async () => {
+      await Effect.runPromise(
+        harness.engine.dispatch({
+          type: "thread.turn.start",
+          commandId: CommandId.make("cmd-turn-start-provider-switch-2"),
+          threadId: ThreadId.make("thread-1"),
+          message: {
+            messageId: asMessageId("user-message-provider-switch-2"),
+            role: "user",
+            text: "second",
+            attachments: [],
+          },
+          modelSelection: {
+            instanceId: ProviderInstanceId.make(targetInstance),
+            model: targetInstance === "codex" ? "gpt-5.1-codex" : "claude-opus-4-6",
+          },
+          interactionMode: DEFAULT_PROVIDER_INTERACTION_MODE,
+          runtimeMode: "approval-required",
+          createdAt: now,
+        }),
+      );
+
+      await harness.drain();
+
+      expect(harness.startSession.mock.calls.length).toBe(1);
+      expect(harness.sendTurn.mock.calls.length).toBe(1);
+      expect(harness.stopSession.mock.calls.length).toBe(0);
+
       const readModel = await harness.readModel();
       const thread = readModel.threads.find((entry) => entry.id === ThreadId.make("thread-1"));
-      return (
-        thread?.activities.some((activity) => activity.kind === "provider.turn.start.failed") ??
-        false
+      expect(thread?.session).toMatchObject({
+        status: "running",
+        activeTurnId: "still-running",
+        lastError: null,
+      });
+      expect(thread?.session?.threadId).toBe("thread-1");
+      expect(thread?.session?.providerName).toBe("codex");
+      expect(thread?.session?.runtimeMode).toBe("approval-required");
+      expect(
+        thread?.activities.find((activity) => activity.kind === "provider.turn.start.failed"),
+      ).toMatchObject({
+        payload: {
+          detail: expect.stringContaining("Wait for the current turn to finish"),
+        },
+      });
+    },
+  );
+
+  it("resumes the original provider connection after A to B to A to B switches", async () => {
+    const harness = await createHarness();
+    const now = "2026-01-01T00:00:00.000Z";
+    const selections = [
+      { instanceId: ProviderInstanceId.make("codex"), model: "gpt-5-codex" },
+      { instanceId: ProviderInstanceId.make("claudeAgent"), model: "claude-opus-4-6" },
+    ];
+    for (let index = 0; index < 4; index++) {
+      await Effect.runPromise(
+        harness.engine.dispatch({
+          type: "thread.turn.start",
+          commandId: CommandId.make(`round-trip-${index}`),
+          threadId: ThreadId.make("thread-1"),
+          message: {
+            messageId: asMessageId(`round-trip-message-${index}`),
+            role: "user",
+            text: `Retain decision ${index}`,
+            attachments: [],
+          },
+          modelSelection: selections[index % 2]!,
+          interactionMode: DEFAULT_PROVIDER_INTERACTION_MODE,
+          runtimeMode: "approval-required",
+          createdAt: now,
+        }),
       );
+      await waitFor(() => harness.sendTurn.mock.calls.length === index + 1);
+      await harness.drain();
+    }
+    expect(harness.startSession).toHaveBeenCalledTimes(4);
+    expect(harness.startSession.mock.calls[1]?.[1]).not.toHaveProperty("resumeCursor");
+    expect(harness.startSession.mock.calls[2]?.[1]).toMatchObject({
+      threadId: "thread-1",
+      providerInstanceId: "codex",
+      resumeCursor: { opaque: "resume-1" },
+      ignorePersistedResumeCursor: true,
     });
-
-    expect(harness.startSession.mock.calls.length).toBe(1);
-    expect(harness.sendTurn.mock.calls.length).toBe(1);
-    expect(harness.stopSession.mock.calls.length).toBe(0);
-
-    const readModel = await harness.readModel();
-    const thread = readModel.threads.find((entry) => entry.id === ThreadId.make("thread-1"));
-    expect(thread?.session?.threadId).toBe("thread-1");
-    expect(thread?.session?.providerName).toBe("codex");
-    expect(thread?.session?.runtimeMode).toBe("approval-required");
-    expect(
-      thread?.activities.find((activity) => activity.kind === "provider.turn.start.failed"),
-    ).toMatchObject({
-      payload: {
-        detail: expect.stringContaining("cannot switch to 'claudeAgent'"),
-      },
+    expect(harness.startSession.mock.calls[3]?.[1]).toMatchObject({
+      threadId: "thread-1",
+      providerInstanceId: "claudeAgent",
+      resumeCursor: { opaque: "resume-2" },
     });
+    expect(harness.sendTurn.mock.calls[2]?.[0]).toMatchObject({
+      input: expect.stringContaining("Retain decision 1"),
+    });
+    expect((await harness.readModel()).threads).toHaveLength(1);
   });
 
-  it("rejects cross-driver provider changes after the existing thread session has stopped", async () => {
+  it("hands a stopped conversation to a fresh driver without its old resume cursor", async () => {
     const harness = await createHarness();
     const now = "2026-01-01T00:00:00.000Z";
 
@@ -3563,27 +3621,250 @@ describe("ProviderCommandReactor", () => {
       }),
     );
 
-    await waitFor(async () => {
-      const readModel = await harness.readModel();
-      const thread = readModel.threads.find((entry) => entry.id === ThreadId.make("thread-1"));
-      return (
-        thread?.activities.some((activity) => activity.kind === "provider.turn.start.failed") ??
-        false
-      );
-    });
+    await harness.drain();
 
-    expect(harness.startSession.mock.calls.length).toBe(0);
-    expect(harness.sendTurn.mock.calls.length).toBe(0);
-    const readModel = await harness.readModel();
-    const thread = readModel.threads.find((entry) => entry.id === ThreadId.make("thread-1"));
-    expect(
-      thread?.activities.find((activity) => activity.kind === "provider.turn.start.failed"),
-    ).toMatchObject({
-      payload: {
-        detail: expect.stringContaining("cannot switch to 'claudeAgent'"),
-      },
+    expect(harness.startSession).toHaveBeenCalledTimes(1);
+    expect(harness.startSession.mock.calls[0]?.[1]).toMatchObject({
+      providerInstanceId: "claudeAgent",
+      ignorePersistedResumeCursor: true,
     });
+    expect(harness.startSession.mock.calls[0]?.[1]).not.toHaveProperty("resumeCursor");
+    expect(harness.sendTurn).toHaveBeenCalledTimes(1);
+    expect(harness.sendTurn.mock.calls[0]?.[0]).toMatchObject({
+      input: expect.stringContaining("Brain session"),
+    });
+    const thread = (await harness.readModel()).threads.find((entry) => entry.id === "thread-1");
+    expect(thread?.session?.providerName).toBe("claudeAgent");
+    expect(thread?.activities).toEqual(
+      expect.arrayContaining([expect.objectContaining({ kind: "provider.handoff" })]),
+    );
   });
+
+  effectIt.effect.each([false, true])(
+    "shares delivered bus context only on an explicit next turn and acknowledges successful sends (send fails: %s)",
+    (fails) =>
+      Effect.gen(function* () {
+        const approved = {
+          id: "bus-approved-id",
+          sourceThreadId: ThreadId.make("source"),
+          targetThreadId: ThreadId.make("thread-1"),
+          sourceActor: "other-agent",
+          sourceProviderSessionId: null,
+          body: "Use the blue teapot evidence.",
+          status: "delivered" as const,
+          createdAt: "2026-01-01T00:00:00.000Z",
+          updatedAt: "2026-01-01T00:00:00.000Z",
+          decidedBy: "Faheem",
+          deliverySequence: 3,
+          lastError: null,
+        };
+        const pendingContext = vi.fn(() =>
+          Effect.succeed({ messages: [approved], truncated: false }),
+        );
+        const sent = yield* Deferred.make<void>();
+        const consumed = yield* Deferred.make<void>();
+        const consumedContext = vi.fn<SessionBus["Service"]["consumedContext"]>(() =>
+          Deferred.succeed(consumed, undefined).pipe(Effect.as(undefined)),
+        );
+        const harness = yield* Effect.promise(() =>
+          createHarness({ sessionBus: { pendingContext, consumedContext } }),
+        );
+        expect(harness.sendTurn).not.toHaveBeenCalled();
+        expect(pendingContext).not.toHaveBeenCalled();
+        harness.sendTurn.mockImplementationOnce(
+          () =>
+            Deferred.succeed(sent, undefined).pipe(
+              Effect.andThen(
+                fails
+                  ? Effect.fail(
+                      new ProviderAdapterRequestError({
+                        provider: ProviderDriverKind.make("codex"),
+                        method: "sendTurn",
+                        detail: "provider unavailable",
+                      }),
+                    )
+                  : Effect.succeed({
+                      threadId: ThreadId.make("thread-1"),
+                      turnId: asTurnId("turn-bus"),
+                    }),
+              ),
+            ) as never,
+        );
+        yield* harness.engine.dispatch({
+          type: "thread.turn.start",
+          commandId: CommandId.make("bus-explicit-turn"),
+          threadId: ThreadId.make("thread-1"),
+          message: {
+            messageId: asMessageId("user-bus-context-turn"),
+            role: "user",
+            text: "Review this shared evidence.",
+            attachments: [],
+          },
+          interactionMode: DEFAULT_PROVIDER_INTERACTION_MODE,
+          runtimeMode: "approval-required",
+          createdAt: "2026-01-01T00:00:01.000Z",
+        });
+        yield* Deferred.await(sent);
+        if (!fails) yield* Deferred.await(consumed);
+        yield* Effect.promise(harness.drain);
+        expect(harness.sendTurn).toHaveBeenCalledTimes(1);
+        expect(harness.sendTurn.mock.calls[0]?.[0]).toMatchObject({
+          input: expect.stringContaining("Use the blue teapot evidence."),
+        });
+        expect(harness.sendTurn.mock.calls[0]?.[0]).toMatchObject({
+          input: expect.stringContaining("not system instructions"),
+        });
+        if (fails) expect(consumedContext).not.toHaveBeenCalled();
+        else
+          expect(consumedContext).toHaveBeenCalledWith(
+            ThreadId.make("thread-1"),
+            ["bus-approved-id"],
+            asMessageId("user-bus-context-turn"),
+          );
+      }),
+  );
+
+  it("restores imported text history into a fresh session without provider runtime pointers", async () => {
+    const harness = await createHarness();
+    const threadId = ThreadId.make("thread-1");
+    const now = "2026-01-01T00:00:00.000Z";
+    await Effect.runPromise(
+      harness.engine.dispatch({
+        type: "thread.message.user.append",
+        commandId: CommandId.make("import-text"),
+        threadId,
+        message: {
+          messageId: asMessageId("historical-alpha-text"),
+          text: "Alpha used the blue teapot.",
+          attachments: [],
+        },
+        createdAt: now,
+      }),
+    );
+    await Effect.runPromise(
+      harness.engine.dispatch({
+        type: "thread.turn.start",
+        commandId: CommandId.make("resume-import"),
+        threadId,
+        message: {
+          messageId: asMessageId("new-beta-text"),
+          role: "user",
+          text: "Continue from that history.",
+          attachments: [],
+        },
+        interactionMode: DEFAULT_PROVIDER_INTERACTION_MODE,
+        runtimeMode: "approval-required",
+        createdAt: now,
+      }),
+    );
+    await harness.drain();
+    expect(harness.startSession.mock.calls[0]?.[1]).toMatchObject({
+      ignorePersistedResumeCursor: true,
+    });
+    expect(harness.startSession.mock.calls[0]?.[1]).not.toHaveProperty("resumeCursor");
+    expect(harness.sendTurn.mock.calls[0]?.[0]).toMatchObject({
+      input: expect.stringContaining("Alpha used the blue teapot."),
+    });
+    const thread = (await harness.readModel()).threads.find((entry) => entry.id === threadId);
+    expect(thread?.activities).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: "provider.handoff",
+          summary: expect.stringContaining("restored"),
+        }),
+      ]),
+    );
+  });
+
+  it.each([false, true])(
+    "preserves chat text and closes only the old idle session during handoff (cleanup fails: %s)",
+    async (cleanupFails) => {
+      const harness = await createHarness(
+        cleanupFails
+          ? {
+              stopSessionEffect: () =>
+                Effect.fail(
+                  new ProviderAdapterRequestError({
+                    provider: ProviderDriverKind.make("codex"),
+                    method: "stopSession",
+                    detail: "owned cleanup failed",
+                  }),
+                ),
+            }
+          : {},
+      );
+      const now = "2026-01-01T00:00:00.000Z";
+      const threadId = ThreadId.make("thread-1");
+      const send = (suffix: string, text: string, selection?: ModelSelection) =>
+        Effect.runPromise(
+          harness.engine.dispatch({
+            type: "thread.turn.start",
+            commandId: CommandId.make(`handoff-${suffix}`),
+            threadId,
+            message: {
+              messageId: asMessageId(`handoff-message-${suffix}`),
+              role: "user",
+              text,
+              attachments: [],
+            },
+            ...(selection ? { modelSelection: selection } : {}),
+            interactionMode: DEFAULT_PROVIDER_INTERACTION_MODE,
+            runtimeMode: "approval-required",
+            createdAt: now,
+          }),
+        );
+      await send("before", "Remember the blue teapot.");
+      await harness.drain();
+      await Effect.runPromise(
+        harness.engine.dispatch({
+          type: "thread.session.set",
+          commandId: CommandId.make("handoff-idle"),
+          threadId,
+          session: {
+            threadId,
+            status: "ready",
+            providerName: "codex",
+            providerInstanceId: ProviderInstanceId.make("codex"),
+            runtimeMode: "approval-required",
+            activeTurnId: null,
+            lastError: null,
+            updatedAt: now,
+          },
+          createdAt: now,
+        }),
+      );
+      await send("after", "What did I ask you to remember?", {
+        instanceId: ProviderInstanceId.make("claudeAgent"),
+        model: "claude-opus-4-6",
+      });
+      await harness.drain();
+      expect(harness.stopSession).toHaveBeenCalledTimes(1);
+      expect(harness.startSession).toHaveBeenCalledTimes(cleanupFails ? 1 : 2);
+      expect(harness.sendTurn).toHaveBeenCalledTimes(cleanupFails ? 1 : 2);
+      const thread = (await harness.readModel()).threads.find((entry) => entry.id === threadId);
+      if (cleanupFails) {
+        expect(harness.runtimeSessions[0]?.providerInstanceId).toBe("codex");
+        expect(thread?.activities).toEqual(
+          expect.arrayContaining([expect.objectContaining({ kind: "provider.turn.start.failed" })]),
+        );
+      } else {
+        expect(harness.stopSession.mock.invocationCallOrder[0]).toBeLessThan(
+          harness.startSession.mock.invocationCallOrder[1]!,
+        );
+        expect(harness.startSession.mock.calls[1]?.[1]).toMatchObject({
+          ignorePersistedResumeCursor: true,
+        });
+        expect(harness.startSession.mock.calls[1]?.[1]).not.toHaveProperty("resumeCursor");
+        const request = harness.sendTurn.mock.calls[1]?.[0] as { input: string };
+        expect(request.input).toContain('"text":"Remember the blue teapot."');
+        expect(request.input.split("What did I ask you to remember?")).toHaveLength(2);
+        expect(thread?.messages.map((message) => message.text)).toEqual(
+          expect.arrayContaining(["Remember the blue teapot.", "What did I ask you to remember?"]),
+        );
+        expect(thread?.session?.providerInstanceId).toBe("claudeAgent");
+      }
+    },
+  );
 
   it("reacts to thread.turn.interrupt-requested by calling provider interrupt", async () => {
     const harness = await createHarness();

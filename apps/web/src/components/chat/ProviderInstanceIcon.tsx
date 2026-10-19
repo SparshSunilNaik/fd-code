@@ -1,14 +1,15 @@
 import { type CSSProperties, memo } from "react";
-import { type ProviderDriverKind } from "@t3tools/contracts";
+import { type ProviderDriverKind, type ProviderInstanceId } from "@t3tools/contracts";
 import { providerInstanceInitials } from "@t3tools/client-runtime/state/provider-instance-display";
 
-import { PROVIDER_ICON_BY_PROVIDER } from "./providerIconUtils";
+import { providerIconFor } from "./providerIconUtils";
 import { cn } from "~/lib/utils";
 
 export { providerInstanceInitials };
 
 export const ProviderInstanceIcon = memo(function ProviderInstanceIcon(props: {
   driverKind: ProviderDriverKind;
+  instanceId?: ProviderInstanceId | undefined;
   displayName: string;
   accentColor?: string | undefined;
   showBadge?: boolean;
@@ -19,7 +20,7 @@ export const ProviderInstanceIcon = memo(function ProviderInstanceIcon(props: {
   statusDotClassName?: string;
   indicatorBackground?: string;
 }) {
-  const Icon = PROVIDER_ICON_BY_PROVIDER[props.driverKind] ?? null;
+  const Icon = providerIconFor(props.driverKind, props.instanceId);
   const indicatorBackground = props.indicatorBackground ?? "var(--card)";
   const accentStyle = props.accentColor
     ? ({ "--provider-accent": props.accentColor } as CSSProperties)

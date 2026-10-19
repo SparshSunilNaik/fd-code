@@ -1,9 +1,10 @@
-import { ProviderDriverKind } from "@t3tools/contracts";
+import { ProviderDriverKind, ProviderInstanceId } from "@t3tools/contracts";
 import {
   AntigravityIcon,
   ClaudeAI,
   CursorIcon,
   GrokIcon,
+  HuggingFaceIcon,
   Icon,
   OpenAI,
   OpenCodeIcon,
@@ -17,6 +18,23 @@ export const PROVIDER_ICON_BY_PROVIDER: Partial<Record<ProviderDriverKind, Icon>
   [ProviderDriverKind.make("grok")]: GrokIcon,
   [ProviderDriverKind.make("antigravity")]: AntigravityIcon,
 };
+
+// Instances that front one upstream (an OpenCode instance scoped to Hugging Face)
+// show that upstream's mark instead of the driver's.
+const PROVIDER_ICON_BY_INSTANCE_ID: Partial<Record<ProviderInstanceId, Icon>> = {
+  [ProviderInstanceId.make("huggingface")]: HuggingFaceIcon,
+};
+
+export function providerIconFor(
+  driverKind: ProviderDriverKind,
+  instanceId?: ProviderInstanceId | undefined,
+): Icon | null {
+  return (
+    (instanceId !== undefined ? PROVIDER_ICON_BY_INSTANCE_ID[instanceId] : undefined) ??
+    PROVIDER_ICON_BY_PROVIDER[driverKind] ??
+    null
+  );
+}
 
 export type ModelEsque = {
   slug: string;

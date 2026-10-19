@@ -1,4 +1,10 @@
-# T3 Code
+# Beta
+
+This is Faheem’s local fork of T3 Code, based on commit `719a76ca1dbf5490f1aa33ffb9966301e02be9a9`. It adds a session-addressed internal bus, model/provider handoffs within one chat, and a server-side connection to Faheem’s local Brain. See [using Beta](docs/user/t3-beta.md) for launch, approval, and recovery behavior.
+
+The upstream project documentation follows. Its public installation commands install upstream T3 Code rather than this local Beta build.
+
+## Upstream T3 Code
 
 T3 Code is an "agent harness control surface". It enables control of the agents on your machine with a best-in-class mobile app ([iOS](https://apps.apple.com/us/app/t3-code-remote-claude-more/id6787819824), [Android](https://play.google.com/store/apps/details?id=com.t3tools.t3code)), [web app](https://app.t3.codes) and [Electron-based desktop app](https://t3.codes).
 

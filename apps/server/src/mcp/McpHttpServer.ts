@@ -1,3 +1,6 @@
+import { GeneralChatToolkit, GeneralChatToolkitHandlersLive } from "./toolkits/general/tools.ts";
+import { BetaToolkit } from "./toolkits/beta/tools.ts";
+import { BetaToolkitHandlersLive } from "./toolkits/beta/handlers.ts";
 import * as NodeCrypto from "node:crypto";
 import * as Cause from "effect/Cause";
 import * as Clock from "effect/Clock";
@@ -629,6 +632,8 @@ const McpTransportLive = McpServer.layerHttp({
 }).pipe(Layer.provide(McpAuthMiddlewareLive));
 
 export const layer = Layer.mergeAll(
+  McpServer.toolkit(GeneralChatToolkit).pipe(Layer.provide(GeneralChatToolkitHandlersLive)),
+  McpServer.toolkit(BetaToolkit).pipe(Layer.provide(BetaToolkitHandlersLive)),
   PreviewToolkitRegistrationLive,
   PullRequestsToolkitRegistrationLive,
   DeviceToolkitRegistrationLive,

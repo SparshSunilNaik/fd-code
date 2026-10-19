@@ -5,6 +5,8 @@ import * as NodePath from "node:path";
 import { assert, describe, it } from "vite-plus/test";
 
 import {
+  desktopDir,
+  stripMacLauncherSigningMetadata,
   makeDevelopmentEnvironmentScript,
   makeDevelopmentLauncherScript,
   resolveElectronBinaryPath,
@@ -16,6 +18,34 @@ import {
 } from "./electron-launcher.mjs";
 
 describe("electron development launcher", () => {
+  it("keeps the fallback bundle identity separate from Alpha", () => {
+    const values = resolveMacBundleInfoPlistStrings("Electron");
+    assert.match(values.CFBundleDisplayName, /^T3 Beta/);
+    assert.match(values.CFBundleIdentifier, /^com\.faheem\.t3beta(?:\.|$)/);
+  });
+
+  it("limits signing cleanup to Finder metadata in the generated Beta bundle", () => {
+    const values = resolveMacBundleInfoPlistStrings("Electron");
+    const bundle = NodePath.join(
+      desktopDir,
+      ".electron-runtime",
+      `${values.CFBundleDisplayName}.app`,
+    );
+    const commands = [];
+    stripMacLauncherSigningMetadata(bundle, (command, args) => commands.push([command, args]));
+    assert.deepEqual(commands, [
+      ["xattr", ["-r", "-d", "com.apple.FinderInfo", bundle]],
+      ["xattr", ["-r", "-d", "com.apple.ResourceFork", bundle]],
+    ]);
+    assert.throws(
+      () =>
+        stripMacLauncherSigningMetadata("/Applications/T3 Code (Alpha).app", () =>
+          assert.fail("must not run"),
+        ),
+      /restricted/,
+    );
+  });
+
   it("uses captured values only as fallbacks for a live runner environment", () => {
     const environmentScript = makeDevelopmentEnvironmentScript({
       VITE_DEV_SERVER_URL: "http://127.0.0.1:8526",
@@ -76,18 +106,18 @@ describe("electron development launcher", () => {
 
   it("keeps the native Electron executable name inside the branded macOS bundle", () => {
     const paths = resolveMacLauncherPaths(
-      "/repo/apps/desktop/.electron-runtime/T3 Code (Dev).app",
-      "T3 Code (Dev)",
+      "/repo/apps/desktop/.electron-runtime/T3 Beta (Dev).app",
+      "T3 Beta (Dev)",
     );
 
-    assert.equal(paths.launcherExecutableName, "T3 Code (Dev) Launcher");
+    assert.equal(paths.launcherExecutableName, "T3 Beta (Dev) Launcher");
     assert.equal(
       paths.launcherBinaryPath,
-      "/repo/apps/desktop/.electron-runtime/T3 Code (Dev).app/Contents/MacOS/T3 Code (Dev) Launcher",
+      "/repo/apps/desktop/.electron-runtime/T3 Beta (Dev).app/Contents/MacOS/T3 Beta (Dev) Launcher",
     );
     assert.equal(
       paths.runtimeElectronBinaryPath,
-      "/repo/apps/desktop/.electron-runtime/T3 Code (Dev).app/Contents/MacOS/Electron",
+      "/repo/apps/desktop/.electron-runtime/T3 Beta (Dev).app/Contents/MacOS/Electron",
     );
 
     const script = makeDevelopmentLauncherScript({
@@ -98,32 +128,32 @@ describe("electron development launcher", () => {
     });
     assert.include(
       script,
-      "exec '/repo/apps/desktop/.electron-runtime/T3 Code (Dev).app/Contents/MacOS/Electron'",
+      "exec '/repo/apps/desktop/.electron-runtime/T3 Beta (Dev).app/Contents/MacOS/Electron'",
     );
     assert.notInclude(script, "node_modules/electron");
   });
 
   it("declares why the macOS app needs protected access", () => {
-    const values = resolveMacBundleInfoPlistStrings("T3 Code (Dev) Launcher");
+    const values = resolveMacBundleInfoPlistStrings("T3 Beta (Dev) Launcher");
 
     assert.equal(
       values.NSScreenCaptureUsageDescription,
-      "T3 Code captures the active window when you use the snapshot shortcut.",
+      "T3 Beta captures the active window when you use the snapshot shortcut.",
     );
     assert.equal(
       values.NSDocumentsFolderUsageDescription,
-      "T3 Code reads project files you open in the desktop app.",
+      "T3 Beta reads project files you open in the desktop app.",
     );
   });
 
   it("ad-hoc signs the complete development app bundle", () => {
-    assert.deepEqual(resolveMacCodeSignArguments("/runtime/T3 Code (Dev).app"), [
+    assert.deepEqual(resolveMacCodeSignArguments("/runtime/T3 Beta (Dev).app"), [
       "--force",
       "--deep",
       "--sign",
       "-",
       "--timestamp=none",
-      "/runtime/T3 Code (Dev).app",
+      "/runtime/T3 Beta (Dev).app",
     ]);
   });
 

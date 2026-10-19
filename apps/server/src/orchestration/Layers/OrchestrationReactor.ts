@@ -13,6 +13,8 @@ import * as ThreadSettlementReactor from "../ThreadSettlementReactor.ts";
 import * as PullRequestSyncReactor from "../PullRequestSyncReactor.ts";
 import * as ThreadPullRequestReactor from "../ThreadPullRequestReactor.ts";
 import * as AgentAwarenessRelay from "../../relay/AgentAwarenessRelay.ts";
+import { BrainSessions } from "../../beta/BrainSessions.ts";
+import * as Option from "effect/Option";
 
 export const makeOrchestrationReactor = Effect.gen(function* () {
   const providerRuntimeIngestion = yield* ProviderRuntimeIngestionService;
@@ -23,8 +25,10 @@ export const makeOrchestrationReactor = Effect.gen(function* () {
   const pullRequestSyncReactor = yield* PullRequestSyncReactor.PullRequestSyncReactor;
   const threadPullRequestReactor = yield* ThreadPullRequestReactor.ThreadPullRequestReactor;
   const agentAwarenessRelay = yield* AgentAwarenessRelay.AgentAwarenessRelay;
+  const brainSessions = yield* Effect.serviceOption(BrainSessions);
 
   const start: OrchestrationReactorShape["start"] = Effect.fn("start")(function* () {
+    if (Option.isSome(brainSessions)) yield* brainSessions.value.start();
     yield* providerRuntimeIngestion.start();
     yield* providerCommandReactor.start();
     yield* checkpointReactor.start();

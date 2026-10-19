@@ -38,11 +38,11 @@ type DesktopThemeBridge = Pick<DesktopBridge, "setTheme">;
 const STORAGE_KEY = "t3code:theme";
 const MEDIA_QUERY = "(prefers-color-scheme: dark)";
 const DEFAULT_THEME_SNAPSHOT: ThemeSnapshot = {
-  theme: "system",
+  theme: "t3-chat",
   resolvedTheme: "light",
   systemDark: false,
-  followSystem: true,
-  appearanceMode: "system",
+  followSystem: false,
+  appearanceMode: "light",
   themeHalves: null,
 };
 
@@ -214,7 +214,7 @@ export function readThemePreference(): Theme {
   if (raw !== null && isKnownThemePreference(raw)) {
     return canonicalThemePreference(raw);
   }
-  return DEFAULT_THEME_SNAPSHOT.theme;
+  return raw === null ? DEFAULT_THEME_SNAPSHOT.theme : "system";
 }
 
 export function writeThemePreference(theme: Theme): void {

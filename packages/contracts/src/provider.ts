@@ -60,6 +60,8 @@ export const ProviderSessionStartInput = Schema.Struct({
   title: Schema.optional(TrimmedNonEmptyString),
   modelSelection: Schema.optional(ModelSelection),
   resumeCursor: Schema.optional(Schema.Unknown),
+  /** Brain owns this connection's cursor; do not inherit the currently routed provider's cursor. */
+  ignorePersistedResumeCursor: Schema.optional(Schema.Literal(true)),
   approvalPolicy: Schema.optional(ProviderApprovalPolicy),
   sandboxMode: Schema.optional(ProviderSandboxMode),
   runtimeMode: RuntimeMode,

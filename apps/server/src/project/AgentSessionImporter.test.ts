@@ -1,3 +1,4 @@
+import { BrainSessions, makeBrainSessions } from "../beta/BrainSessions.ts";
 import * as NodeServices from "@effect/platform-node/NodeServices";
 import { describe, expect, it, vi } from "@effect/vitest";
 import {
@@ -905,6 +906,7 @@ it.layer(integrationLayer)("AgentSessionImporter integration", (it) => {
           Layer.provide(AnalyticsService.layerTest),
         );
         const reactorLayer = ProviderCommandReactorLive.pipe(
+          Layer.provideMerge(Layer.effect(BrainSessions, makeBrainSessions(":memory:", "test"))),
           Layer.provideMerge(providerLayer),
           Layer.provide(
             Layer.succeed(ProjectionSnapshotQuery.ProjectionSnapshotQuery, {

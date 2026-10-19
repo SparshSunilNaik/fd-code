@@ -36,13 +36,19 @@ type BootResult = {
   backgroundColor: string;
   bootVariables: Record<string, string>;
   metaContent: string | null;
+  storage: Record<string, string>;
 };
 
 function runBootScript(options: {
   storage?: Record<string, string>;
   storageThrows?: boolean;
+  freshBetaProfile?: boolean;
   prefersDark: boolean;
 }): BootResult {
+  const storage: Record<string, string> = {
+    ...(!options.freshBetaProfile ? { "beta:pale-pink:v1": "applied" } : {}),
+    ...options.storage,
+  };
   const classes = new Set<string>();
   const bootVariables: Record<string, string> = {};
   const meta = {
@@ -78,7 +84,13 @@ function runBootScript(options: {
     localStorage: {
       getItem: (key: string): string | null => {
         if (options.storageThrows) throw new Error("storage blocked");
-        return options.storage?.[key] ?? null;
+        return storage[key] ?? null;
+      },
+      setItem: (key: string, value: string) => {
+        storage[key] = value;
+      },
+      removeItem: (key: string) => {
+        delete storage[key];
       },
     },
     matchMedia: () => ({ matches: options.prefersDark }),
@@ -98,6 +110,7 @@ function runBootScript(options: {
     backgroundColor: documentElement.style.backgroundColor,
     bootVariables,
     metaContent: meta.content,
+    storage,
   };
 }
 
@@ -113,7 +126,7 @@ function runtimeResolvedAppearance(
   invalidateCustomThemes();
   try {
     const raw = storage[THEME_STORAGE_KEY] ?? null;
-    const theme = raw !== null && isKnownThemePreference(raw) ? raw : "system";
+    const theme = raw === null ? "t3-chat" : isKnownThemePreference(raw) ? raw : "system";
     const followRaw = storage[THEME_FOLLOW_SYSTEM_STORAGE_KEY] ?? null;
     const appearanceRaw = storage[THEME_APPEARANCE_MODE_STORAGE_KEY] ?? null;
     const appearanceMode =
@@ -514,5 +527,43 @@ describe("index.html boot script", () => {
 
     const dark = runBootScript({ storageThrows: true, prefersDark: true });
     expect(dark.isDark).toBe(true);
+  });
+});
+
+describe("Beta appearance initialization", () => {
+  it("opens a fresh profile in pale pink even on a dark OS", () => {
+    const boot = runBootScript({ freshBetaProfile: true, prefersDark: true });
+    expect(boot.isDark).toBe(false);
+    expect(boot.themeId).toBe("t3-chat");
+    expect(boot.bootVariables["--boot-background"]).toBe(T3_CHAT_THEME.colors.canvas);
+    expect(boot.storage["beta:pale-pink:v1"]).toBe("applied");
+  });
+
+  it("backs up an existing selection before applying the requested appearance once", () => {
+    const original = {
+      [THEME_STORAGE_KEY]: "grove",
+      [THEME_APPEARANCE_MODE_STORAGE_KEY]: "dark",
+      [THEME_FOLLOW_SYSTEM_STORAGE_KEY]: "true",
+      "t3code:theme-halves:v1": JSON.stringify({ dark: "iris" }),
+    };
+    const boot = runBootScript({ storage: original, freshBetaProfile: true, prefersDark: true });
+    expect(JSON.parse(boot.storage["beta:pale-pink:v1:previous"]!)).toEqual(original);
+    expect(boot.isDark).toBe(false);
+    expect(boot.themeId).toBe("t3-chat");
+    expect(boot.storage["t3code:theme-halves:v1"]).toBeUndefined();
+
+    const later = runBootScript({
+      storage: {
+        ...boot.storage,
+        [THEME_STORAGE_KEY]: "grove",
+        [THEME_APPEARANCE_MODE_STORAGE_KEY]: "dark",
+      },
+      prefersDark: true,
+    });
+    expect(later.themeId).toBe("grove");
+    expect(later.isDark).toBe(true);
+    expect(later.storage["beta:pale-pink:v1:previous"]).toBe(
+      boot.storage["beta:pale-pink:v1:previous"],
+    );
   });
 });

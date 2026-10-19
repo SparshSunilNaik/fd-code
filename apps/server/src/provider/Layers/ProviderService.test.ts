@@ -1178,6 +1178,76 @@ antigravityInstanceRouting.layer("ProviderServiceLive instance-owned conversatio
         }
       }),
   );
+  it.effect(
+    "allows an explicit fresh handoff from an incompatible or removed provider instance",
+    () =>
+      Effect.gen(function* () {
+        const provider = yield* ProviderService.ProviderService;
+        const directory = yield* ProviderSessionDirectory.ProviderSessionDirectory;
+        originalAntigravityInstanceAvailable = false;
+        const threadId = asThreadId("antigravity-fresh-handoff");
+        yield* directory.upsert({
+          threadId,
+          provider: antigravityDriver,
+          providerInstanceId: originalAntigravityInstanceId,
+          status: "stopped",
+          runtimeMode: "approval-required",
+          resumeCursor: { sessionId: "old-account-session" },
+        });
+        replacementAntigravity.startSession.mockClear();
+        yield* provider.startSession(threadId, {
+          threadId,
+          providerInstanceId: replacementAntigravityInstanceId,
+          runtimeMode: "approval-required",
+          ignorePersistedResumeCursor: true,
+        });
+        assert.equal(replacementAntigravity.startSession.mock.calls.length, 1);
+        assert.equal(
+          Object.hasOwn(replacementAntigravity.startSession.mock.calls[0]![0], "resumeCursor"),
+          false,
+        );
+        yield* provider.stopSession({ threadId });
+      }),
+  );
+});
+
+const freshHandoff = makeProviderServiceLayer();
+freshHandoff.layer("ProviderService fresh handoff", (it) => {
+  it.effect(
+    "ignores the routed cursor but preserves an explicitly selected Brain continuation",
+    () =>
+      Effect.gen(function* () {
+        const provider = yield* ProviderService.ProviderService;
+        const directory = yield* ProviderSessionDirectory.ProviderSessionDirectory;
+        for (const explicit of [false, true]) {
+          const threadId = asThreadId(`fresh-handoff-${explicit}`);
+          yield* directory.upsert({
+            threadId,
+            provider: CODEX_DRIVER,
+            providerInstanceId: codexInstanceId,
+            status: "stopped",
+            runtimeMode: "approval-required",
+            resumeCursor: { sessionId: "alpha-owned" },
+          });
+          freshHandoff.codex.startSession.mockClear();
+          yield* provider.startSession(threadId, {
+            threadId,
+            providerInstanceId: codexInstanceId,
+            runtimeMode: "approval-required",
+            ignorePersistedResumeCursor: true,
+            ...(explicit ? { resumeCursor: { sessionId: "explicit-old" } } : {}),
+          });
+          assert.equal(freshHandoff.codex.startSession.mock.calls.length, 1);
+          const received = freshHandoff.codex.startSession.mock.calls[0]?.[0];
+          assert.deepEqual(
+            received?.resumeCursor,
+            explicit ? { sessionId: "explicit-old" } : undefined,
+          );
+          assert.equal(Object.hasOwn(received!, "ignorePersistedResumeCursor"), false);
+          yield* provider.stopSession({ threadId });
+        }
+      }),
+  );
 });
 
 const unsupportedRollback = makeProviderServiceLayer({ supportsConversationRollback: false });

@@ -19,6 +19,30 @@ import * as DesktopUpdates from "./DesktopUpdates.ts";
 import { flushCallbacks, makeHarness } from "./updatesTestHarness.ts";
 
 describe("DesktopUpdates", () => {
+  it.effect("disables upstream update checks and installation for the Beta fork", () => {
+    const harness = makeHarness({ env: { T3CODE_DESKTOP_MOCK_UPDATES: "false" } });
+    return Effect.scoped(
+      Effect.gen(function* () {
+        const updates = yield* DesktopUpdates.DesktopUpdates;
+        yield* updates.configure;
+        const state = yield* updates.getState;
+        assert.equal(state.enabled, false);
+        assert.equal(state.status, "disabled");
+        assert.deepEqual(
+          yield* updates.disabledReason,
+          Option.some("Automatic updates are disabled in Beta to preserve this local fork."),
+        );
+        assert.equal((yield* updates.check("manual")).checked, false);
+        assert.equal((yield* updates.download).accepted, false);
+        assert.equal((yield* updates.install).accepted, false);
+        yield* TestClock.adjust(Duration.minutes(5));
+        assert.equal(harness.checkCount(), 0);
+        assert.equal(harness.downloadCount(), 0);
+        assert.equal(harness.quitAndInstalls(), 0);
+      }),
+    ).pipe(Effect.provide(Layer.merge(TestClock.layer(), harness.layer)));
+  });
+
   it("preserves complete causes for update poller and event failures", () => {
     const cause = Cause.combine(
       Cause.fail(new Error("updater failed")),

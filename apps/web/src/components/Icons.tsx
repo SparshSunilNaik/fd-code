@@ -735,6 +735,31 @@ export const OpenCodeIcon: Icon = (props) => (
   </svg>
 );
 
+export const HuggingFaceIcon: Icon = (props) => (
+  <svg {...props} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="16" cy="14.5" r="12.5" fill="#FFD21E" />
+    <path
+      d="M16 2a12.5 12.5 0 1 0 0 25 12.5 12.5 0 0 0 0-25Zm0 1.6a10.9 10.9 0 1 1 0 21.8 10.9 10.9 0 0 1 0-21.8Z"
+      fill="#FF9D0B"
+    />
+    <ellipse cx="11.2" cy="11.6" rx="1.7" ry="2" fill="#3A3B45" />
+    <ellipse cx="20.8" cy="11.6" rx="1.7" ry="2" fill="#3A3B45" />
+    <path d="M9.8 16.2c1.4 3.4 3.7 5 6.2 5s4.8-1.6 6.2-5H9.8Z" fill="#3A3B45" />
+    <path
+      d="M13 19.6c.9.9 1.9 1.4 3 1.4s2.1-.5 3-1.4c-.8-.7-1.9-1.1-3-1.1s-2.2.4-3 1.1Z"
+      fill="#F94040"
+    />
+    <path
+      d="M3.6 20.4c-.9.6-1.1 1.8-.5 2.7l2.6 3.9c.9 1.4 2.5 2.2 4.2 2.2h1.4c1.2 0 2-1.2 1.6-2.3l-1.7-4.6c-.4-1-1.5-1.5-2.5-1.2l-1.1.4-1.4-1.1c-.8-.5-1.8-.5-2.6 0Z"
+      fill="#FF9D0B"
+    />
+    <path
+      d="M28.4 20.4c.9.6 1.1 1.8.5 2.7l-2.6 3.9c-.9 1.4-2.5 2.2-4.2 2.2h-1.4c-1.2 0-2-1.2-1.6-2.3l1.7-4.6c.4-1 1.5-1.5 2.5-1.2l1.1.4 1.4-1.1c.8-.5 1.8-.5 2.6 0Z"
+      fill="#FF9D0B"
+    />
+  </svg>
+);
+
 export const GithubCopilotIcon: Icon = ({ className, ...props }) => (
   <svg
     {...props}

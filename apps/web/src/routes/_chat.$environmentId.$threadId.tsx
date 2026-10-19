@@ -1,3 +1,4 @@
+import { GeneralChatNavigation } from "../components/GeneralChatNavigation";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 
@@ -88,6 +89,10 @@ function ChatThreadRouteView() {
 
   return (
     <SidebarInset className="h-svh min-h-0 overflow-hidden overscroll-y-none bg-background text-foreground md:h-dvh">
+      <GeneralChatNavigation
+        key={`${threadRef.environmentId}:${threadRef.threadId}`}
+        threadRef={threadRef}
+      />
       {renderState === "ready" || (renderState === "loading" && serverThreadShell !== null) ? (
         <ChatView
           environmentId={threadRef.environmentId}

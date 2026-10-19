@@ -336,6 +336,11 @@ export const make = Effect.gen(function* () {
   );
 
   const resolveDisabledReason = Effect.gen(function* () {
+    // Upstream Alpha releases would replace this fork and its custom features.
+    // The explicit local mock feed remains available for updater regression tests.
+    if (!config.mockUpdates) {
+      return Option.some("Automatic updates are disabled in Beta to preserve this local fork.");
+    }
     const hasFeedConfig = yield* hasUpdateFeedConfig;
     return Option.fromNullishOr(
       getAutoUpdateDisabledReason({

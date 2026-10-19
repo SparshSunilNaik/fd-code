@@ -1,3 +1,4 @@
+import { GeneralChatLocation } from "./generalChat.ts";
 import * as Context from "effect/Context";
 import type * as DateTime from "effect/DateTime";
 import * as Schema from "effect/Schema";
@@ -30,6 +31,19 @@ import {
   ThreadId,
   TrimmedNonEmptyString,
 } from "./baseSchemas.ts";
+import {
+  BetaBusError,
+  BetaBusSendInput,
+  BetaBusMessage,
+  BetaBusInboxInput,
+  BetaBusInboxResult,
+  BetaBusDecideInput,
+  BetaThreadsInput,
+  BetaThreadsResult,
+  BetaBrainCallInput,
+  BetaBrainResponse,
+  BetaArtsieInput,
+} from "./beta.ts";
 import { ExecutionEnvironmentDescriptor } from "./environment.ts";
 import {
   ClientOrchestrationCommand,
@@ -614,7 +628,72 @@ class EnvironmentConnectHttpApi extends HttpApiGroup.make("connect")
     }),
   ) {}
 
+class EnvironmentBetaHttpApi extends HttpApiGroup.make("beta")
+  .add(
+    HttpApiEndpoint.post("generalChat", "/api/beta/general-chat", {
+      headers: OptionalBearerHeaders,
+      success: GeneralChatLocation,
+      error: [BetaBusError, ...EnvironmentScopedOperationErrors],
+    }).middleware(EnvironmentAuthenticatedAuth),
+  )
+  .add(
+    HttpApiEndpoint.post("artsie", "/api/beta/artsie", {
+      headers: OptionalBearerHeaders,
+      payload: BetaArtsieInput,
+      success: BetaBrainResponse,
+      error: EnvironmentScopedOperationErrors,
+    }).middleware(EnvironmentAuthenticatedAuth),
+  )
+  .add(
+    HttpApiEndpoint.get("brainHealth", "/api/beta/brain/health", {
+      headers: OptionalBearerHeaders,
+      success: BetaBrainResponse,
+      error: EnvironmentScopedOperationErrors,
+    }).middleware(EnvironmentAuthenticatedAuth),
+  )
+  .add(
+    HttpApiEndpoint.post("brainCall", "/api/beta/brain/call", {
+      headers: OptionalBearerHeaders,
+      payload: BetaBrainCallInput,
+      success: BetaBrainResponse,
+      error: EnvironmentScopedOperationErrors,
+    }).middleware(EnvironmentAuthenticatedAuth),
+  )
+  .add(
+    HttpApiEndpoint.post("threads", "/api/beta/threads", {
+      headers: OptionalBearerHeaders,
+      payload: BetaThreadsInput,
+      success: BetaThreadsResult,
+      error: [BetaBusError, ...EnvironmentScopedOperationErrors],
+    }).middleware(EnvironmentAuthenticatedAuth),
+  )
+  .add(
+    HttpApiEndpoint.post("inbox", "/api/beta/inbox", {
+      headers: OptionalBearerHeaders,
+      payload: BetaBusInboxInput,
+      success: BetaBusInboxResult,
+      error: [BetaBusError, ...EnvironmentScopedOperationErrors],
+    }).middleware(EnvironmentAuthenticatedAuth),
+  )
+  .add(
+    HttpApiEndpoint.post("send", "/api/beta/send", {
+      headers: OptionalBearerHeaders,
+      payload: BetaBusSendInput,
+      success: BetaBusMessage,
+      error: [BetaBusError, ...EnvironmentScopedOperationErrors],
+    }).middleware(EnvironmentAuthenticatedAuth),
+  )
+  .add(
+    HttpApiEndpoint.post("decide", "/api/beta/decide", {
+      headers: OptionalBearerHeaders,
+      payload: BetaBusDecideInput,
+      success: BetaBusMessage,
+      error: [BetaBusError, ...EnvironmentScopedOperationErrors],
+    }).middleware(EnvironmentAuthenticatedAuth),
+  ) {}
+
 export class EnvironmentHttpApi extends HttpApi.make("environment")
+  .add(EnvironmentBetaHttpApi)
   .add(EnvironmentMetadataHttpApi)
   .add(EnvironmentAuthHttpApi)
   .add(EnvironmentOrchestrationHttpApi)

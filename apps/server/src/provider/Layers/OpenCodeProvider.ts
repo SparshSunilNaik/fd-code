@@ -254,12 +254,16 @@ function openCodeCapabilitiesForModel(input: {
   });
 }
 
-function flattenOpenCodeModels(input: OpenCodeInventory): ReadonlyArray<ServerProviderModel> {
+function flattenOpenCodeModels(
+  input: OpenCodeInventory,
+  upstreamProviders: ReadonlyArray<string> = [],
+): ReadonlyArray<ServerProviderModel> {
   const connected = new Set(input.providerList.connected);
+  const allowed = upstreamProviders.length > 0 ? new Set(upstreamProviders) : null;
   const models: Array<ServerProviderModel> = [];
 
   for (const provider of input.providerList.all) {
-    if (!connected.has(provider.id)) {
+    if (!connected.has(provider.id) || (allowed !== null && !allowed.has(provider.id))) {
       continue;
     }
 
@@ -514,7 +518,7 @@ export const checkOpenCodeProviderStatus = Effect.fn("checkOpenCodeProviderStatu
   version = inventoryExit.value.version;
 
   const models = providerModelsFromSettings(
-    flattenOpenCodeModels(inventoryExit.value.inventory),
+    flattenOpenCodeModels(inventoryExit.value.inventory, openCodeSettings.upstreamProviders),
     customModels,
     DEFAULT_OPENCODE_MODEL_CAPABILITIES,
   );

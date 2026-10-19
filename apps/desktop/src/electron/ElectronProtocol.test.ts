@@ -22,6 +22,12 @@ import * as ElectronProtocol from "./ElectronProtocol.ts";
 const protocolLayer = ElectronProtocol.layer.pipe(Layer.provide(NodeServices.layer));
 
 describe("ElectronProtocol", () => {
+  it("uses Beta schemes without claiming Alpha's protocol handlers", () => {
+    assert.equal(ElectronProtocol.getDesktopScheme(false), "t3beta");
+    assert.equal(ElectronProtocol.getDesktopScheme(true), "t3beta-dev");
+    assert.equal(ElectronProtocol.getDesktopUrl(false), "t3beta://app/");
+  });
+
   beforeEach(() => {
     handleMock.mockReset();
     netFetchMock.mockReset();

@@ -1436,6 +1436,7 @@ const makeProviderService = Effect.fn("makeProviderService")(function* (
         }
         const persistedBinding = Option.getOrUndefined(yield* directory.getBinding(threadId));
         if (
+          input.ignorePersistedResumeCursor !== true &&
           persistedBinding?.provider === resolvedProvider &&
           persistedBinding.providerInstanceId !== resolvedInstanceId &&
           (input.resumeCursor != null || persistedBinding.resumeCursor != null)
@@ -1457,7 +1458,8 @@ const makeProviderService = Effect.fn("makeProviderService")(function* (
         }
         const effectiveResumeCursor =
           input.resumeCursor ??
-          (persistedBinding?.providerInstanceId === resolvedInstanceId
+          (input.ignorePersistedResumeCursor !== true &&
+          persistedBinding?.providerInstanceId === resolvedInstanceId
             ? persistedBinding.resumeCursor
             : undefined);
         const effectiveCwd =
@@ -1501,9 +1503,14 @@ const makeProviderService = Effect.fn("makeProviderService")(function* (
         const adapter = yield* registry.getByInstance(resolvedInstanceId);
         yield* clearTurnAnalyticsSession(resolvedInstanceId, threadId);
         yield* prepareMcpSession(threadId, resolvedInstanceId);
+        const {
+          resumeCursor: _requestedResumeCursor,
+          ignorePersistedResumeCursor: _ignorePersistedResumeCursor,
+          ...adapterInput
+        } = input;
         const session = yield* adapter
           .startSession({
-            ...input,
+            ...adapterInput,
             providerInstanceId: resolvedInstanceId,
             ...(effectiveCwd !== undefined ? { cwd: effectiveCwd } : {}),
             ...(effectiveResumeCursor !== undefined ? { resumeCursor: effectiveResumeCursor } : {}),

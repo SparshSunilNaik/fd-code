@@ -1,0 +1,66 @@
+diff --git a/dist/cjs/core/code-splitter/compilers.cjs b/dist/cjs/core/code-splitter/compilers.cjs
+index b33999f5c6350b1169e08034a0c0ada6ee8c490b..b177c3a27d46693824ae2730e2927b27c50277c4 100644
+--- a/dist/cjs/core/code-splitter/compilers.cjs
++++ b/dist/cjs/core/code-splitter/compilers.cjs
+@@ -300,7 +300,7 @@ function compileCodeSplitReferenceRoute(opts) {
+ 									if (!shouldSplit) return;
+ 									modified = true;
+ 									if (!hasImportedOrDefinedIdentifier(LAZY_ROUTE_COMPONENT_IDENT)) programPath.unshiftContainer("body", [_babel_template.statement(`import { ${LAZY_ROUTE_COMPONENT_IDENT} } from '${PACKAGE}'`)()]);
+-									if (!hasImportedOrDefinedIdentifier(splitNodeMeta.localImporterIdent)) programPath.unshiftContainer("body", [_babel_template.statement(`const ${splitNodeMeta.localImporterIdent} = () => import('${splitUrl}')`)()]);
++									if (!hasImportedOrDefinedIdentifier(splitNodeMeta.localImporterIdent)) programPath.unshiftContainer("body", [_babel_template.statement(`const ${splitNodeMeta.localImporterIdent} = () => import(${JSON.stringify(splitUrl)})`)()]);
+ 									const insertionPath = path.getStatementParent() ?? path;
+ 									let splitPropValue;
+ 									for (const plugin of opts.compilerPlugins ?? []) {
+@@ -336,7 +336,7 @@ function compileCodeSplitReferenceRoute(opts) {
+ 									if (!shouldSplit) return;
+ 									modified = true;
+ 									if (!hasImportedOrDefinedIdentifier(LAZY_FN_IDENT)) programPath.unshiftContainer("body", _babel_template.smart(`import { ${LAZY_FN_IDENT} } from '${PACKAGE}'`)());
+-									if (!hasImportedOrDefinedIdentifier(splitNodeMeta.localImporterIdent)) programPath.unshiftContainer("body", [_babel_template.statement(`const ${splitNodeMeta.localImporterIdent} = () => import('${splitUrl}')`)()]);
++									if (!hasImportedOrDefinedIdentifier(splitNodeMeta.localImporterIdent)) programPath.unshiftContainer("body", [_babel_template.statement(`const ${splitNodeMeta.localImporterIdent} = () => import(${JSON.stringify(splitUrl)})`)()]);
+ 									prop.value = _babel_template.expression(`${LAZY_FN_IDENT}(${splitNodeMeta.localImporterIdent}, '${splitNodeMeta.exporterIdent}')`)();
+ 								}
+ 							}
+diff --git a/dist/esm/core/code-splitter/compilers.js b/dist/esm/core/code-splitter/compilers.js
+index f5577512825b2e8f98fdc9593703b9b65156bc29..86b9b1eaa31601a8908d00e01d53b89f54b77464 100644
+--- a/dist/esm/core/code-splitter/compilers.js
++++ b/dist/esm/core/code-splitter/compilers.js
+@@ -296,7 +296,7 @@ function compileCodeSplitReferenceRoute(opts) {
+ 									if (!shouldSplit) return;
+ 									modified = true;
+ 									if (!hasImportedOrDefinedIdentifier(LAZY_ROUTE_COMPONENT_IDENT)) programPath.unshiftContainer("body", [template.statement(`import { ${LAZY_ROUTE_COMPONENT_IDENT} } from '${PACKAGE}'`)()]);
+-									if (!hasImportedOrDefinedIdentifier(splitNodeMeta.localImporterIdent)) programPath.unshiftContainer("body", [template.statement(`const ${splitNodeMeta.localImporterIdent} = () => import('${splitUrl}')`)()]);
++									if (!hasImportedOrDefinedIdentifier(splitNodeMeta.localImporterIdent)) programPath.unshiftContainer("body", [template.statement(`const ${splitNodeMeta.localImporterIdent} = () => import(${JSON.stringify(splitUrl)})`)()]);
+ 									const insertionPath = path.getStatementParent() ?? path;
+ 									let splitPropValue;
+ 									for (const plugin of opts.compilerPlugins ?? []) {
+@@ -332,7 +332,7 @@ function compileCodeSplitReferenceRoute(opts) {
+ 									if (!shouldSplit) return;
+ 									modified = true;
+ 									if (!hasImportedOrDefinedIdentifier(LAZY_FN_IDENT)) programPath.unshiftContainer("body", template.smart(`import { ${LAZY_FN_IDENT} } from '${PACKAGE}'`)());
+-									if (!hasImportedOrDefinedIdentifier(splitNodeMeta.localImporterIdent)) programPath.unshiftContainer("body", [template.statement(`const ${splitNodeMeta.localImporterIdent} = () => import('${splitUrl}')`)()]);
++									if (!hasImportedOrDefinedIdentifier(splitNodeMeta.localImporterIdent)) programPath.unshiftContainer("body", [template.statement(`const ${splitNodeMeta.localImporterIdent} = () => import(${JSON.stringify(splitUrl)})`)()]);
+ 									prop.value = template.expression(`${LAZY_FN_IDENT}(${splitNodeMeta.localImporterIdent}, '${splitNodeMeta.exporterIdent}')`)();
+ 								}
+ 							}
+diff --git a/src/core/code-splitter/compilers.ts b/src/core/code-splitter/compilers.ts
+index 32eade99af10b47a4641ea0b9dd4bd47af129d42..f917561764c4cd3982b7c6c57153ac856649e6ed 100644
+--- a/src/core/code-splitter/compilers.ts
++++ b/src/core/code-splitter/compilers.ts
+@@ -623,7 +623,7 @@ export function compileCodeSplitReferenceRoute(
+                         ) {
+                           programPath.unshiftContainer('body', [
+                             template.statement(
+-                              `const ${splitNodeMeta.localImporterIdent} = () => import('${splitUrl}')`,
++                              `const ${splitNodeMeta.localImporterIdent} = () => import(${JSON.stringify(splitUrl)})`,
+                             )(),
+                           ])
+                         }
+@@ -719,7 +719,7 @@ export function compileCodeSplitReferenceRoute(
+                         ) {
+                           programPath.unshiftContainer('body', [
+                             template.statement(
+-                              `const ${splitNodeMeta.localImporterIdent} = () => import('${splitUrl}')`,
++                              `const ${splitNodeMeta.localImporterIdent} = () => import(${JSON.stringify(splitUrl)})`,
+                             )(),
+                           ])
+                         }

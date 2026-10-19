@@ -1416,7 +1416,7 @@ export interface ChatComposerProps {
 
   onProviderModelSelect: (instanceId: ProviderInstanceId, model: string) => void;
   onOpenProviderSetup: (instanceId: ProviderInstanceId) => void;
-  getModelDisabledReason: (instanceId: ProviderInstanceId, model: string) => string | null;
+  getModelDisabledReason?: (instanceId: ProviderInstanceId, model: string) => string | null;
   toggleInteractionMode: () => void;
   handleRuntimeModeChange: (mode: RuntimeMode) => void;
   handleInteractionModeChange: (mode: ProviderInteractionMode) => void;
@@ -4942,7 +4942,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
             }
           : {})}
         onOpenChange={setIsComposerModelPickerOpen}
-        getModelDisabledReason={getModelDisabledReason}
+        {...(getModelDisabledReason ? { getModelDisabledReason } : {})}
         onInstanceModelChange={onProviderModelSelect}
         onOpenProviderSetup={onOpenProviderSetup}
       />

@@ -139,6 +139,7 @@ const makeOpenCodeConfig = (overrides: Partial<OpenCodeSettings>): OpenCodeSetti
   serverUrl: "",
   serverPassword: "",
   customModels: [],
+  upstreamProviders: [],
   ...overrides,
 });
 

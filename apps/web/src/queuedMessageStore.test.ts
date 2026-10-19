@@ -22,6 +22,18 @@ function makeMessage(prompt: string): Omit<QueuedComposerMessage, "id"> {
 }
 
 describe("queuedMessageStore", () => {
+  it("holds a model switch until the current reply ends, including after tool completions", () => {
+    const message = { ...makeMessage("continue with another model"), waitForTurnEnd: true };
+    expect(
+      isQueuedMessageDue({ message, phase: "running", latestToolActivityId: "new-tool" }),
+    ).toBe(false);
+    expect(
+      isQueuedMessageDue({ message, phase: "connecting", latestToolActivityId: "new-tool" }),
+    ).toBe(false);
+    expect(isQueuedMessageDue({ message, phase: "ready", latestToolActivityId: "new-tool" })).toBe(
+      true,
+    );
+  });
   beforeEach(() => {
     useQueuedMessageStore.setState({ queuesByThreadKey: {}, drainGeneration: 0 });
   });

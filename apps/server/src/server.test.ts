@@ -1,3 +1,4 @@
+import { BrainSessions, makeBrainSessions } from "./beta/BrainSessions.ts";
 import * as NodeHttpServer from "@effect/platform-node/NodeHttpServer";
 import * as NodeSocket from "@effect/platform-node/NodeSocket";
 import * as NodeServices from "@effect/platform-node/NodeServices";
@@ -108,6 +109,7 @@ const encodeTestJson = Schema.encodeUnknownSync(Schema.fromJsonString(Schema.Unk
 import * as BackgroundPolicy from "./background/BackgroundPolicy.ts";
 import * as ServerConfig from "./config.ts";
 import * as DeviceService from "./device/DeviceService.ts";
+import { SessionBus } from "./beta/SessionBus.ts";
 import { HTTP_ROUTER_CONFIG, makeRoutesLayer } from "./server.ts";
 import {
   isThreadDetailEvent,
@@ -754,7 +756,11 @@ const buildAppUnderTest = (options?: {
     );
 
     const servedRoutesLayer = HttpRouter.serve(
-      makeRoutesLayer.pipe(Layer.provide(serviceLauncherClientLayer)),
+      makeRoutesLayer.pipe(
+        Layer.provide(serviceLauncherClientLayer),
+        Layer.provide(SessionBus.layer),
+        Layer.provide(Layer.effect(BrainSessions, makeBrainSessions(":memory:", "test"))),
+      ),
       {
         disableListenLog: true,
         disableLogger: true,

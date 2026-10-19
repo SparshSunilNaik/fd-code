@@ -382,21 +382,21 @@ describe("theme files", () => {
     });
   });
 
-  it("keeps the T3 Chat palette faithful and readable", () => {
+  it("keeps the Pale Pink palette readable", () => {
     expectThemeColors(T3_CHAT_THEME.colors, {
-      canvas: "#fdf7fd",
-      chrome: "#fdf7fd",
-      toolbarBorder: "#efbdeb",
-      toolbarControl: "#f3e6f5",
-      toolbarControlHover: "#eccfe3",
-      surfaceRaised: "#fdfafd",
-      input: "#e7c1dc",
-      focus: "#db2777",
-      messageSurface: "#f7def2",
-      codeBackground: "#f5ecf9",
-      codeForeground: "#673c8b",
-      accentSurface: "#f3e6f5",
-      sidebar: "#f2e1f4",
+      canvas: "#fff5f8",
+      chrome: "#fff5f8",
+      toolbarBorder: "#eed3df",
+      toolbarControl: "#f8e2eb",
+      toolbarControlHover: "#f1ccdc",
+      surfaceRaised: "#fffafb",
+      input: "#d8a5bd",
+      focus: "#a63d6b",
+      messageSurface: "#f8e2ec",
+      codeBackground: "#f9eaf1",
+      codeForeground: "#5c374b",
+      accentSurface: "#f5dbe6",
+      sidebar: "#f9e4ed",
     });
     expectThemeColors(T3_CHAT_THEME.variants!.dark!, {
       canvas: "#1f1a24",
@@ -430,9 +430,9 @@ describe("theme files", () => {
     for (const theme of [T3_CHAT_THEME, GROVE_THEME, OCEAN_THEME, EMBER_THEME, IRIS_THEME]) {
       expect(getThemeDefinition(theme.id)).toBe(theme);
       expect(getThemeModes(theme)).toEqual(["light", "dark"]);
-      expect(theme.sidebarArtwork).toBe(true);
-      expect(themeAllowsSidebarArtwork(theme.id)).toBe(true);
-      expect(theme.colors.accent).toMatch(/^oklch\(/);
+      expect(theme.sidebarArtwork).toBe(theme !== T3_CHAT_THEME);
+      expect(themeAllowsSidebarArtwork(theme.id)).toBe(theme !== T3_CHAT_THEME);
+      expect(toCanonicalThemeColor(theme.colors.accent)).not.toBeNull();
       expect(theme.variants?.dark?.accent).toMatch(/^oklch\(/);
 
       for (const mode of ["light", "dark"] as const) {

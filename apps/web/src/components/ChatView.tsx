@@ -425,13 +425,11 @@ import {
   shouldRetargetThreadPullRequestPanel,
   shouldOpenProactiveTurnDiff,
   shouldRenderPreviewMiniPlayer,
-  getStartedThreadModelChangeBlockReason,
   LAST_INVOKED_SCRIPT_BY_PROJECT_KEY,
   LastInvokedScriptByProjectSchema,
   type LocalDispatchSnapshot,
   PullRequestDialogState,
   cloneComposerImageForRetry,
-  deriveLockedProvider,
   readFileAsDataUrl,
   resolveFileAttachmentUrl,
   prepareRevertedMessageAttachments,
@@ -2537,16 +2535,8 @@ export default function ChatView(props: ChatViewProps) {
     : (primaryEnvironment?.serverConfig ?? null);
   const providerStatuses = serverConfig?.providers ?? EMPTY_PROVIDERS;
   const selectedProviderByThreadId = composerActiveProvider ?? null;
-  const threadProvider =
-    activeThread?.modelSelection.instanceId ??
-    activeProjectDefaultModelSelection?.instanceId ??
-    null;
-  const lockedProvider = deriveLockedProvider({
-    thread: activeThread,
-    selectedProvider: selectedProviderByThreadId,
-    threadProvider,
-    providers: providerStatuses,
-  });
+  // A running connection does not lock the next turn's model. Brain owns the chat.
+  const lockedProvider = null;
   const pullRequestsCapabilityKnown = serverConfig !== null;
   const supportsPullRequests = serverConfig?.environment.capabilities.pullRequests === true;
   const attachmentEnvironmentConfig = environmentById.get(environmentId)?.serverConfig ?? null;
@@ -7509,12 +7499,15 @@ export default function ChatView(props: ChatViewProps) {
       );
       return;
     }
+    const nextTurnChangesModel =
+      ctxSelectedModelSelection.instanceId !==
+        (activeThread.session?.providerInstanceId ?? activeThread.modelSelection.instanceId) ||
+      ctxSelectedModelSelection.model !== activeThread.modelSelection.model;
     if (
       !queuedMessage &&
-      !directAnnotation &&
       phase === "running" &&
       activeThreadKey &&
-      settings.followUpBehavior === "queue"
+      (nextTurnChangesModel || (!directAnnotation && settings.followUpBehavior === "queue"))
     ) {
       if (composerRef.current?.validateProviderInput(promptForSend) === false) {
         return;
@@ -7528,6 +7521,7 @@ export default function ChatView(props: ChatViewProps) {
         reviewComments: [...composerReviewComments],
         submissionIntent,
         queuedAfterToolActivityId: latestCompletedToolActivityId(threadActivities),
+        waitForTurnEnd: nextTurnChangesModel,
         createdAt: new Date().toISOString(),
       });
       promptRef.current = "";
@@ -8225,6 +8219,7 @@ export default function ChatView(props: ChatViewProps) {
     steer: (id) => {
       const message = queuedMessages.find((entry) => entry.id === id);
       if (!message || sendInFlightRef.current || queueBlockedByPendingRequest) return;
+      if (message.waitForTurnEnd && (phase === "running" || phase === "connecting")) return;
       void onSend(undefined, message.submissionIntent, undefined, message);
     },
     remove: (id) => {
@@ -8818,52 +8813,9 @@ export default function ChatView(props: ChatViewProps) {
     composerRef,
   ]);
 
-  const getModelDisabledReason = useCallback(
-    (instanceId: ProviderInstanceId, model: string): string | null => {
-      if (!activeThread) {
-        return null;
-      }
-      const reason = getStartedThreadModelChangeBlockReason({
-        providers: providerStatuses,
-        hasStartedSession: activeThread.session !== null,
-        currentModelSelection: activeThread.modelSelection,
-        currentProviderInstanceId: activeThread.session?.providerInstanceId ?? null,
-        nextModelSelection: { instanceId, model },
-      });
-      return reason ? `${reason.description} Start a new thread to use this model.` : null;
-    },
-    [activeThread, providerStatuses],
-  );
-
   const onProviderModelSelect = useCallback(
     (instanceId: ProviderInstanceId, model: string) => {
       if (!activeThread) return;
-      // Look up the configured instance so model normalization and custom
-      // model lookup stay scoped to that exact instance. Unknown instance ids
-      // are rejected by returning early; the server remains authoritative too.
-      const entry = providerStatuses.find((snapshot) => snapshot.instanceId === instanceId);
-      const resolvedDriverKind = entry?.driver ?? null;
-      if (
-        lockedProvider !== null &&
-        resolvedDriverKind !== null &&
-        resolvedDriverKind !== lockedProvider
-      ) {
-        scheduleComposerFocus();
-        return;
-      }
-      if (lockedProvider !== null && activeThread.session?.providerInstanceId) {
-        const currentEntry = providerStatuses.find(
-          (snapshot) => snapshot.instanceId === activeThread.session?.providerInstanceId,
-        );
-        if (
-          currentEntry?.continuation?.groupKey &&
-          entry?.continuation?.groupKey &&
-          currentEntry.continuation.groupKey !== entry.continuation.groupKey
-        ) {
-          scheduleComposerFocus();
-          return;
-        }
-      }
       const resolvedModel = resolveAppModelSelectionForInstance(
         instanceId,
         settings,
@@ -8878,28 +8830,21 @@ export default function ChatView(props: ChatViewProps) {
         instanceId,
         model: resolvedModel,
       };
-      const modelChangeBlockReason = getStartedThreadModelChangeBlockReason({
-        providers: providerStatuses,
-        hasStartedSession: activeThread.session !== null,
-        currentModelSelection: activeThread.modelSelection,
-        currentProviderInstanceId: activeThread.session?.providerInstanceId ?? null,
-        nextModelSelection,
-      });
-      if (modelChangeBlockReason) {
-        toastManager.add({
-          type: "warning",
-          title: modelChangeBlockReason.title,
-          description: modelChangeBlockReason.description,
-        });
-        scheduleComposerFocus();
-        return;
-      }
       setComposerDraftModelSelection(
         scopeThreadRef(activeThread.environmentId, activeThread.id),
         nextModelSelection,
         { explicit: true },
       );
       setStickyComposerModelSelection(nextModelSelection);
+      const currentInstanceId = activeThread.session?.providerInstanceId;
+      if (currentInstanceId && currentInstanceId !== instanceId) {
+        toastManager.add({
+          type: "info",
+          title: "Model selected for this Brain session",
+          description:
+            "Your next message uses this model with the latest shared Brain context. The current reply continues. Returning providers resume their saved connection when compatible.",
+        });
+      }
       scheduleComposerFocus();
     },
     [
@@ -9715,7 +9660,6 @@ export default function ChatView(props: ChatViewProps) {
                             }
                             onProviderModelSelect={onProviderModelSelect}
                             onOpenProviderSetup={openProviderSetup}
-                            getModelDisabledReason={getModelDisabledReason}
                             toggleInteractionMode={toggleInteractionMode}
                             handleRuntimeModeChange={handleRuntimeModeChange}
                             handleInteractionModeChange={handleInteractionModeChange}

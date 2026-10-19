@@ -956,6 +956,7 @@ it.layer(NodeServices.layer)("server settings", (it) => {
         serverUrl: "http://127.0.0.1:4096",
         serverPassword: "secret-password",
         customModels: [],
+        upstreamProviders: [],
       });
     }).pipe(Effect.provide(makeServerSettingsLayer())),
   );

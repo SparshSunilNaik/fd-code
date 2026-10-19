@@ -36,10 +36,10 @@
         // app colors before React mounts.
         const DEFAULT_THEME_PALETTES = {
           light: {
-            background: "oklch(0.982446 0.010114 325.653)",
-            foreground: "oklch(0.325698 0.116116 325.037)",
-            accent: "oklch(0.591646 0.217985 0.584)",
-            chrome: "oklch(0.982446 0.010114 325.653)",
+            background: "oklch(0.978751 0.011389 356.992)",
+            foreground: "oklch(0.34565 0.039506 347.935)",
+            accent: "oklch(0.519163 0.145595 356.22)",
+            chrome: "oklch(0.978751 0.011389 356.992)",
           },
           dark: {
             background: "oklch(0.22813 0.020366 307.469)",
@@ -53,10 +53,10 @@
         const BUILT_IN_THEME_PALETTES = {
           "t3-chat": {
             light: {
-              background: "oklch(0.982446 0.010114 325.653)",
-              foreground: "oklch(0.325698 0.116116 325.037)",
-              accent: "oklch(0.591646 0.217985 0.584)",
-              chrome: "oklch(0.982446 0.010114 325.653)",
+              background: "oklch(0.978751 0.011389 356.992)",
+              foreground: "oklch(0.34565 0.039506 347.935)",
+              accent: "oklch(0.519163 0.145595 356.22)",
+              chrome: "oklch(0.978751 0.011389 356.992)",
             },
             dark: {
               background: "oklch(0.22813 0.020366 307.469)",
@@ -217,7 +217,32 @@
         };
 
         try {
-          const storedTheme = window.localStorage.getItem("t3code:theme");
+          // Apply the requested Beta appearance once. Save the prior selection before
+          // changing it; later choices in Settings remain authoritative.
+          const appearanceMigrationKey = "beta:pale-pink:v1";
+          if (window.localStorage.getItem(appearanceMigrationKey) !== "applied") {
+            const keys = [
+              "t3code:theme",
+              THEME_APPEARANCE_MODE_STORAGE_KEY,
+              THEME_FOLLOW_SYSTEM_STORAGE_KEY,
+              THEME_HALVES_STORAGE_KEY,
+            ];
+            const backupKey = `${appearanceMigrationKey}:previous`;
+            if (window.localStorage.getItem(backupKey) === null) {
+              window.localStorage.setItem(
+                backupKey,
+                JSON.stringify(
+                  Object.fromEntries(keys.map((key) => [key, window.localStorage.getItem(key)])),
+                ),
+              );
+            }
+            window.localStorage.setItem("t3code:theme", "t3-chat");
+            window.localStorage.setItem(THEME_APPEARANCE_MODE_STORAGE_KEY, "light");
+            window.localStorage.setItem(THEME_FOLLOW_SYSTEM_STORAGE_KEY, "false");
+            window.localStorage.removeItem(THEME_HALVES_STORAGE_KEY);
+            window.localStorage.setItem(appearanceMigrationKey, "applied");
+          }
+          const storedTheme = window.localStorage.getItem("t3code:theme") ?? "t3-chat";
           const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
           // Older builds stored the dark T3 Chat palette as its own theme id
           // and every maintainer theme under a t3- prefix; keep those
@@ -477,13 +502,13 @@
         cursor: pointer;
       }
     </style>
-    <title>T3 Code (Alpha)</title>
+    <title>Beta</title>
   </head>
   <body>
     <div id="root">
       <div id="boot-shell">
-        <div id="boot-shell-card" aria-label="T3 Code splash screen">
-          <img id="boot-shell-logo" src="/apple-touch-icon.png" alt="T3 Code" />
+        <div id="boot-shell-card" aria-label="Beta splash screen">
+          <img id="boot-shell-logo" src="/apple-touch-icon.png" alt="Beta" />
         </div>
       </div>
     </div>

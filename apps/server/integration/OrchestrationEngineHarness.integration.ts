@@ -1,3 +1,4 @@
+import { BrainSessions, makeBrainSessions } from "../src/beta/BrainSessions.ts";
 // @effect-diagnostics nodeBuiltinImport:off
 import * as NodeChildProcess from "node:child_process";
 
@@ -338,6 +339,7 @@ export const makeOrchestrationIntegrationHarness = (
       generateThreadTitle: () => Effect.succeed({ title: "New thread" }),
     } as unknown as TextGeneration["Service"]);
     const providerCommandReactorLayer = ProviderCommandReactorLive.pipe(
+      Layer.provideMerge(Layer.effect(BrainSessions, makeBrainSessions(":memory:", "test"))),
       Layer.provide(
         Layer.mock(ProviderAuthService)({
           tryHandlePromptCommand: () => Effect.succeed(false),

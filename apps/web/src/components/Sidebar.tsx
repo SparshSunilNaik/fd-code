@@ -1,3 +1,4 @@
+import { GeneralChatButton } from "./GeneralChatButton";
 import { requestCustomSnooze } from "./CustomSnoozeDialog";
 import { useSupportsMultiplePullRequests } from "~/hooks/useSupportsMultiplePullRequests";
 import { resolveThreadCurrentPullRequestLink } from "@t3tools/shared/threadPullRequests";
@@ -233,6 +234,8 @@ import {
 } from "./ui/combobox";
 import { SidebarContent, SidebarGroup, useSidebar } from "./ui/sidebar";
 import { SidebarChromeFooter, SidebarChromeHeader } from "./sidebar/SidebarChrome";
+import { BetaWorkspacePanel } from "./BetaWorkspacePanel";
+import { ArtsiePanel } from "./ArtsiePanel";
 import { SidebarHeaderIconButton, SidebarThreadHeader } from "./sidebar/SidebarThreadHeader";
 import { Popover, PopoverPopup, PopoverTrigger } from "./ui/popover";
 import { Tooltip, TooltipPopup, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
@@ -4367,6 +4370,13 @@ export default function Sidebar() {
   return (
     <>
       <SidebarChromeHeader isElectron={isElectron} />
+      <div className="space-y-1 border-b px-3 py-2">
+        <GeneralChatButton />
+        <div className="flex flex-wrap gap-1">
+          <BetaWorkspacePanel compact />
+          <ArtsiePanel />
+        </div>
+      </div>
       <SidebarContent
         className="gap-0 min-h-full"
         fixedHeader={

@@ -1,8 +1,12 @@
+import { GENERAL_CHAT_THREAD_PREFIX } from "@t3tools/contracts";
+import { GENERAL_CHAT_INSTRUCTIONS } from "../../beta/generalChatContext.ts";
 import {
   type ChatAttachment,
   CommandId,
   EventId,
   type ModelSelection,
+  type MessageId,
+  PROVIDER_SEND_TURN_MAX_INPUT_CHARS,
   type OrchestrationEvent,
   ProviderDriverKind,
   type ProjectId,
@@ -55,6 +59,9 @@ import {
   type ThreadTitleMessage,
 } from "../../textGeneration/ThreadTitleContext.ts";
 import { canReplaceThreadTitle, DEFAULT_THREAD_TITLE } from "../threadTitles.ts";
+import { BrainSessions, brainConnectionKey } from "../../beta/BrainSessions.ts";
+import { formatApprovedBusContext } from "../approvedBusContext.ts";
+import { SessionBus } from "../../beta/SessionBus.ts";
 import {
   resolveSourceControlWriterModelSelection,
   ServerSettingsService,
@@ -211,6 +218,8 @@ const make = Effect.gen(function* () {
   const projectionSnapshotQuery = yield* ProjectionSnapshotQuery;
   const providerAuthService = yield* ProviderAuthService;
   const providerService = yield* ProviderService;
+  const sessionBus = yield* Effect.serviceOption(SessionBus);
+  const brainSessions = yield* BrainSessions;
   const providerRegistry = yield* ProviderRegistry;
   const gitWorkflow = yield* GitWorkflowService;
   const fileSystem = yield* FileSystem.FileSystem;
@@ -406,6 +415,8 @@ const make = Effect.gen(function* () {
       return;
     }
     const session = thread.session;
+    // A rejected concurrent request must not erase the turn that is still running.
+    if (session?.status === "running") return;
     yield* setThreadSession({
       threadId: input.threadId,
       session: {
@@ -519,36 +530,33 @@ const make = Effect.gen(function* () {
       .pipe(Effect.map(Option.getOrUndefined));
   });
 
-  const rejectStartedThreadModelChangeIfRequired = Effect.fnUntraced(function* (input: {
-    readonly threadId: ThreadId;
-    readonly currentModelSelection: ModelSelection;
-    readonly requestedModelSelection: ModelSelection | undefined;
-  }) {
-    const requestedModelSelection = input.requestedModelSelection;
-    if (
-      requestedModelSelection === undefined ||
-      (input.currentModelSelection.instanceId === requestedModelSelection.instanceId &&
-        input.currentModelSelection.model === requestedModelSelection.model)
-    ) {
-      return;
-    }
-    const providers = yield* providerRegistry.getProviders;
-    const requiresNewThread =
-      providers.find((snapshot) => snapshot.instanceId === input.currentModelSelection.instanceId)
-        ?.requiresNewThreadForModelChange === true ||
-      providers.find((snapshot) => snapshot.instanceId === requestedModelSelection.instanceId)
+  const rememberActiveProvider = Effect.fn("rememberActiveProvider")(function* (
+    threadId: ThreadId,
+  ) {
+    const active = (yield* providerService.listSessions()).find(
+      (session) => session.threadId === threadId,
+    );
+    if (!active?.providerInstanceId) return;
+    const info = yield* providerService.getInstanceInfo(active.providerInstanceId);
+    const capabilities = yield* providerService.getCapabilities(active.providerInstanceId);
+    const snapshots = yield* providerRegistry.getProviders;
+    const separateModel =
+      capabilities.sessionModelSwitch === "unsupported" ||
+      snapshots.find((snapshot) => snapshot.instanceId === active.providerInstanceId)
         ?.requiresNewThreadForModelChange === true;
-    if (!requiresNewThread) {
-      return;
-    }
-    return yield* new ProviderAdapterRequestError({
-      provider: providerErrorLabelFromInstanceHint({
-        instanceId: String(requestedModelSelection.instanceId),
-        modelSelectionInstanceId: String(input.currentModelSelection.instanceId),
+    // Unknown model identity must not overwrite a model-specific bookmark.
+    if (separateModel && active.model === undefined) return;
+    yield* brainSessions.park(
+      threadId,
+      brainConnectionKey({
+        instanceId: active.providerInstanceId,
+        continuationKey: info.continuationIdentity.continuationKey,
+        cwd: active.cwd,
+        runtimeMode: active.runtimeMode,
+        ...(separateModel ? { model: active.model } : {}),
       }),
-      method: "thread.turn.start",
-      detail: `Thread '${input.threadId}' cannot switch models after the conversation has started. Start a new thread to use '${requestedModelSelection.model}'.`,
-    });
+      active.resumeCursor,
+    );
   });
 
   const ensureSessionForThread = Effect.fn("ensureSessionForThread")(function* (
@@ -557,6 +565,9 @@ const make = Effect.gen(function* () {
     options?: {
       readonly modelSelection?: ModelSelection;
       readonly pendingTurnStart?: boolean;
+      readonly messageId?: MessageId;
+      readonly messageText?: string;
+      readonly hasPriorUserMessages?: boolean;
     },
   ) {
     const thread = yield* resolveThreadShell(threadId);
@@ -593,7 +604,7 @@ const make = Effect.gen(function* () {
       activeSession !== undefined &&
       activeSession.providerInstanceId !== undefined
         ? activeSession.providerInstanceId
-        : thread.modelSelection.instanceId;
+        : (thread.session?.providerInstanceId ?? thread.modelSelection.instanceId);
     const desiredModelSelection = requestedModelSelection ?? thread.modelSelection;
     const desiredInstanceId = desiredModelSelection.instanceId;
     const currentInfo = yield* providerService.getInstanceInfo(currentInstanceId).pipe(
@@ -631,6 +642,29 @@ const make = Effect.gen(function* () {
       });
     }
     const preferredProvider: ProviderDriverKind = desiredDriverKind;
+    const instanceChanged = desiredInstanceId !== currentInstanceId;
+    const incompatibleSession =
+      thread.session !== null &&
+      instanceChanged &&
+      (currentInfo.driverKind !== desiredInfo.driverKind ||
+        currentInfo.continuationIdentity.continuationKey !==
+          desiredInfo.continuationIdentity.continuationKey);
+    const modelChanged =
+      requestedModelSelection !== undefined &&
+      requestedModelSelection.model !== (activeSession?.model ?? thread.modelSelection.model);
+    if (
+      (instanceChanged || modelChanged) &&
+      (activeSession?.status === "running" || thread.session?.status === "running")
+    ) {
+      return yield* new ProviderAdapterRequestError({
+        provider: preferredProvider,
+        method: "thread.turn.start",
+        detail:
+          "Wait for the current turn to finish before changing models or providers. The active turn was not interrupted.",
+      });
+    }
+    const recoverHistory = thread.session === null && options?.hasPriorUserMessages === true;
+    const requiresHandoff = recoverHistory || incompatibleSession;
     if (options?.pendingTurnStart === true && thread.session?.status !== "running") {
       yield* setThreadSession({
         threadId,
@@ -647,48 +681,29 @@ const make = Effect.gen(function* () {
         createdAt,
       });
     }
-    if (thread.session !== null) {
-      yield* rejectStartedThreadModelChangeIfRequired({
-        threadId,
-        currentModelSelection:
-          activeSession?.model !== undefined
-            ? {
-                ...thread.modelSelection,
-                instanceId: currentInstanceId,
-                model: activeSession.model,
-              }
-            : thread.modelSelection,
-        requestedModelSelection,
-      });
-    }
-    if (
-      thread.session !== null &&
-      requestedModelSelection !== undefined &&
-      requestedModelSelection.instanceId !== currentInstanceId
-    ) {
-      if (currentInfo.driverKind !== desiredInfo.driverKind) {
-        return yield* new ProviderAdapterRequestError({
-          provider: preferredProvider,
-          method: "thread.turn.start",
-          detail: `Thread '${threadId}' is bound to driver '${currentInfo.driverKind}' and cannot switch to '${desiredInfo.driverKind}'.`,
-        });
-      }
-      if (
-        currentInfo.continuationIdentity.continuationKey !==
-        desiredInfo.continuationIdentity.continuationKey
-      ) {
-        return yield* new ProviderAdapterRequestError({
-          provider: preferredProvider,
-          method: "thread.turn.start",
-          detail: `Thread '${threadId}' cannot switch from instance '${currentInstanceId}' to '${desiredInstanceId}' because their provider resume state is incompatible.`,
-        });
-      }
-    }
     const project = yield* resolveProject(thread.projectId);
     const effectiveCwd = resolveThreadWorkspaceCwd({
       thread,
       projects: project ? [project] : [],
     });
+    const capabilities = yield* providerService.getCapabilities(desiredInstanceId);
+    const snapshots = yield* providerRegistry.getProviders;
+    const modelHasSeparateConnection =
+      capabilities.sessionModelSwitch === "unsupported" ||
+      snapshots.find((snapshot) => snapshot.instanceId === desiredInstanceId)
+        ?.requiresNewThreadForModelChange === true;
+    const connectionKey = brainConnectionKey({
+      instanceId: desiredInstanceId,
+      continuationKey: desiredInfo.continuationIdentity.continuationKey,
+      cwd: effectiveCwd,
+      runtimeMode: desiredRuntimeMode,
+      ...(modelHasSeparateConnection ? { model: desiredModelSelection.model } : {}),
+    });
+    yield* rememberActiveProvider(threadId);
+    const bookmark = yield* brainSessions.connection(threadId, connectionKey);
+    const rotateConnection =
+      requiresHandoff || bookmark.invalidated || (modelChanged && modelHasSeparateConnection);
+    if (rotateConnection && activeSession) yield* providerService.stopSession({ threadId });
     const refreshWorkspaceSnapshot = effectiveCwd
       ? providerRegistry
           .refreshWorkspaceSnapshot({ instanceId: desiredInstanceId, cwd: effectiveCwd })
@@ -707,10 +722,18 @@ const make = Effect.gen(function* () {
           ...(effectiveCwd ? { cwd: effectiveCwd } : {}),
           ...(thread.title ? { title: thread.title } : {}),
           modelSelection: desiredModelSelection,
-          ...(input?.resumeCursor !== undefined ? { resumeCursor: input.resumeCursor } : {}),
+          ...(input?.resumeCursor !== undefined || bookmark.cursor !== undefined
+            ? { resumeCursor: input?.resumeCursor ?? bookmark.cursor }
+            : {}),
+          ...(rotateConnection ? { ignorePersistedResumeCursor: true as const } : {}),
           runtimeMode: desiredRuntimeMode,
         })
-        .pipe(Effect.tap(() => refreshWorkspaceSnapshot));
+        .pipe(
+          Effect.tap((session) =>
+            brainSessions.connected(threadId, connectionKey, session.resumeCursor),
+          ),
+          Effect.tap(() => refreshWorkspaceSnapshot),
+        );
 
     const bindSessionToThread = (session: ProviderSession) =>
       Effect.gen(function* () {
@@ -742,7 +765,9 @@ const make = Effect.gen(function* () {
       });
 
     const existingSessionThreadId =
-      thread.session && thread.session.status !== "stopped" && activeSession ? thread.id : null;
+      !rotateConnection && thread.session && thread.session.status !== "stopped" && activeSession
+        ? thread.id
+        : null;
     if (existingSessionThreadId) {
       const runtimeModeChanged = thread.runtimeMode !== thread.session?.runtimeMode;
       const cwdChanged = effectiveCwd !== activeSession?.cwd;
@@ -769,7 +794,7 @@ const make = Effect.gen(function* () {
         !shouldRestartForModelSelectionChange
       ) {
         yield* refreshWorkspaceSnapshot;
-        return existingSessionThreadId;
+        return { threadId: existingSessionThreadId, connectionKey };
       }
 
       const resumeCursor = shouldRestartForModelChange
@@ -806,17 +831,41 @@ const make = Effect.gen(function* () {
         cwd: restartedSession.cwd,
       });
       yield* bindSessionToThread(restartedSession);
-      return restartedSession.threadId;
+      return { threadId: restartedSession.threadId, connectionKey };
     }
 
     const startedSession = yield* startProviderSession(undefined);
     yield* bindSessionToThread(startedSession);
-    return startedSession.threadId;
+    if (requiresHandoff) {
+      yield* orchestrationEngine.dispatch({
+        type: "thread.activity.append",
+        commandId: yield* serverCommandId("provider-handoff"),
+        threadId,
+        activity: {
+          id: yield* serverEventId(),
+          tone: "info",
+          kind: "provider.handoff",
+          summary: `Brain session ${recoverHistory ? "restored" : "continues"} with ${desiredInstanceId}${bookmark.cursor !== undefined ? " (connection resumed)" : ""}`,
+          payload: {
+            fromInstanceId: currentInstanceId,
+            toInstanceId: desiredInstanceId,
+            detail:
+              "The same durable Brain session supplies shared context. Returning providers resume their saved connection when compatible; full event history remains available through beta_session_memory.",
+          },
+          turnId: null,
+          createdAt,
+        },
+        createdAt,
+      });
+    }
+    return { threadId: startedSession.threadId, connectionKey };
   });
 
   const buildSendTurnRequestForThread = Effect.fnUntraced(function* (input: {
     readonly threadId: ThreadId;
     readonly messageText: string;
+    readonly messageId: MessageId;
+    readonly hasPriorUserMessages: boolean;
     readonly attachments?: ReadonlyArray<ChatAttachment>;
     readonly modelSelection?: ModelSelection;
     readonly interactionMode?: "default" | "plan";
@@ -828,14 +877,59 @@ const make = Effect.gen(function* () {
         new Error(`Thread '${input.threadId}' was not found in read model.`),
       );
     }
-    yield* ensureSessionForThread(input.threadId, input.createdAt, {
+    const generalContext = input.threadId.startsWith(GENERAL_CHAT_THREAD_PREFIX)
+      ? GENERAL_CHAT_INSTRUCTIONS
+      : "";
+    if (input.messageText.length + generalContext.length > PROVIDER_SEND_TURN_MAX_INPUT_CHARS) {
+      return yield* new ProviderAdapterRequestError({
+        provider: providerErrorLabelFromInstanceHint({
+          instanceId: String(thread.modelSelection.instanceId),
+        }),
+        method: "thread.turn.start",
+        detail: "Shorten this message to leave room for General chat routing context.",
+      });
+    }
+    const pendingBusContext = Option.isSome(sessionBus)
+      ? yield* sessionBus.value.pendingContext(input.threadId)
+      : { messages: [], truncated: false };
+    const busContext = formatApprovedBusContext(
+      pendingBusContext.messages,
+      PROVIDER_SEND_TURN_MAX_INPUT_CHARS - input.messageText.length - generalContext.length,
+    );
+    if (pendingBusContext.messages.length > 0 && busContext.ids.length === 0) {
+      return yield* new ProviderAdapterRequestError({
+        provider: providerErrorLabelFromInstanceHint({
+          instanceId: String(thread.modelSelection.instanceId),
+        }),
+        method: "thread.turn.start",
+        detail:
+          "This message leaves no room for approved session bus context. Shorten it and send again; the shared messages remain pending for the next turn.",
+      });
+    }
+    yield* brainSessions.sync(input.threadId);
+    const session = yield* ensureSessionForThread(input.threadId, input.createdAt, {
+      messageId: input.messageId,
+      messageText: busContext.text + input.messageText,
+      hasPriorUserMessages: input.hasPriorUserMessages,
       ...(input.modelSelection !== undefined ? { modelSelection: input.modelSelection } : {}),
       pendingTurnStart: true,
     });
     if (input.modelSelection !== undefined) {
       threadModelSelections.set(input.threadId, input.modelSelection);
     }
-    const normalizedInput = toNonEmptyProviderInput(input.messageText);
+    const brainContext = yield* brainSessions.prepare({
+      threadId: input.threadId,
+      key: session.connectionKey,
+      messageId: input.messageId,
+      maxChars:
+        PROVIDER_SEND_TURN_MAX_INPUT_CHARS -
+        busContext.text.length -
+        input.messageText.length -
+        generalContext.length,
+    });
+    const normalizedInput = toNonEmptyProviderInput(
+      generalContext + brainContext.text + busContext.text + input.messageText,
+    );
     const normalizedAttachments = input.attachments ?? [];
     const activeSession = yield* providerService
       .listSessions()
@@ -866,11 +960,15 @@ const make = Effect.gen(function* () {
         : input.modelSelection;
 
     return {
-      threadId: input.threadId,
-      ...(normalizedInput ? { input: normalizedInput } : {}),
-      ...(normalizedAttachments.length > 0 ? { attachments: normalizedAttachments } : {}),
-      ...(modelForTurn !== undefined ? { modelSelection: modelForTurn } : {}),
-      ...(input.interactionMode !== undefined ? { interactionMode: input.interactionMode } : {}),
+      brainContext,
+      busContextIds: busContext.ids,
+      request: {
+        threadId: input.threadId,
+        ...(normalizedInput ? { input: normalizedInput } : {}),
+        ...(normalizedAttachments.length > 0 ? { attachments: normalizedAttachments } : {}),
+        ...(modelForTurn !== undefined ? { modelSelection: modelForTurn } : {}),
+        ...(input.interactionMode !== undefined ? { interactionMode: input.interactionMode } : {}),
+      },
     };
   });
 
@@ -1469,6 +1567,8 @@ const make = Effect.gen(function* () {
     }
     const sendTurnRequest = yield* buildSendTurnRequestForThread({
       threadId: event.payload.threadId,
+      messageId: message.id,
+      hasPriorUserMessages: hasOtherUserMessages,
       messageText: projectComposerContextForProvider({
         text: message.text,
         records: message.context?.records ?? [],
@@ -1488,9 +1588,35 @@ const make = Effect.gen(function* () {
       return;
     }
 
-    const send = providerService
-      .sendTurn(sendTurnRequest.value)
-      .pipe(Effect.asVoid, Effect.catchCause(recoverTurnStartFailure));
+    const send = providerService.sendTurn(sendTurnRequest.value.request).pipe(
+      Effect.tap(() =>
+        brainSessions.accepted(
+          event.payload.threadId,
+          sendTurnRequest.value.brainContext.key,
+          sendTurnRequest.value.brainContext.seenThrough,
+        ),
+      ),
+      Effect.tap(() =>
+        Option.isSome(sessionBus) && sendTurnRequest.value.busContextIds.length > 0
+          ? sessionBus.value
+              .consumedContext(
+                event.payload.threadId,
+                sendTurnRequest.value.busContextIds,
+                message.id,
+              )
+              .pipe(
+                Effect.catchCause((cause) =>
+                  Effect.logWarning(
+                    "Session bus context was sent but its receipt could not be saved; it may be repeated on the next turn.",
+                    { cause: Cause.pretty(cause) },
+                  ),
+                ),
+              )
+          : Effect.void,
+      ),
+      Effect.asVoid,
+      Effect.catchCause(recoverTurnStartFailure),
+    );
     // The forked send settles `sent` from here on, so drop the entry the post-processing hook uses.
     if (resumed && event.commandId !== null) resumedTurnStarts.delete(event.commandId);
     yield* send.pipe(
@@ -1775,6 +1901,7 @@ const make = Effect.gen(function* () {
           yield* maybeRefineThreadTitle(event.payload.threadId);
         return;
       case "thread.session-set":
+        yield* rememberActiveProvider(event.payload.threadId);
         if (event.payload.session.status === "ready")
           yield* maybeRefineThreadTitle(event.payload.threadId);
         return;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "@effect/vitest";
-import { createArtsieClient } from "./ArtsieClient.ts";
+import { createArtsieAgentClient, createArtsieClient } from "./ArtsieClient.ts";
 
 describe("ARTsie host connection", () => {
   it("reuses the host service, sends its token only to the action endpoint, and returns no bootstrap credentials", async () => {
@@ -94,5 +94,45 @@ describe("ARTsie host connection", () => {
       ok: false,
       error: { message: expect.stringContaining("too large") },
     });
+  });
+
+  it("lets agent tools call discovered native tools through the same token boundary", async () => {
+    const calls: Array<{ url: string; init?: RequestInit }> = [];
+    const agent = createArtsieAgentClient(async (url, init) => {
+      calls.push({ url: String(url), ...(init ? { init } : {}) });
+      return Response.json(
+        String(url).endsWith("status")
+          ? { service: "ARTsie" }
+          : String(url).endsWith("bootstrap")
+            ? { token: "private-hub-token" }
+            : { content: [{ type: "text", text: "ok" }] },
+      );
+    });
+    const args = { app: "photocraft", tool: "document_info", arguments: {} };
+    const result = await agent("call", args);
+    expect(result).toEqual({ ok: true, value: { content: [{ type: "text", text: "ok" }] } });
+    expect(JSON.stringify(result)).not.toContain("private-hub-token");
+    expect(calls.at(-1)?.url).toBe("http://127.0.0.1:8743/api/call");
+    expect(calls.at(-1)?.init).toMatchObject({
+      method: "POST",
+      redirect: "error",
+      headers: { "X-ARTsie-Token": "private-hub-token" },
+      body: JSON.stringify(args),
+    });
+  });
+
+  it("keeps the native picker and Finder out of agent tools", async () => {
+    let called = false;
+    const agent = createArtsieAgentClient(async () => {
+      called = true;
+      return Response.json({});
+    });
+    for (const action of ["import", "reveal", "help"]) {
+      expect(await agent(action as "apps", {})).toMatchObject({
+        ok: false,
+        error: { code: "not-allowed" },
+      });
+    }
+    expect(called).toBe(false);
   });
 });

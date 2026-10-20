@@ -19,10 +19,16 @@ const ACTIONS = new Set([
 const record = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
-/** Reuses the existing hub and its documents. The per-run token stays on this server. */
-export function createArtsieClient(fetch: typeof globalThis.fetch = globalThis.fetch) {
-  return async (input: BetaArtsieInput): Promise<BetaBrainResponse> => {
-    if (!ACTIONS.has(input.action)) {
+type ArtsieRequest = { readonly action: string; readonly args: Readonly<Record<string, unknown>> };
+
+/**
+ * Reuses the existing hub and its documents. The per-run token is fetched from the
+ * hub's own loopback bootstrap for each request and stays on this server: it is
+ * never logged, persisted or returned.
+ */
+function createArtsieTransport(fetch: typeof globalThis.fetch, allowed: ReadonlySet<string>) {
+  return async (input: ArtsieRequest): Promise<BetaBrainResponse> => {
+    if (!allowed.has(input.action)) {
       return { ok: false, error: { code: "not-allowed", message: "Unsupported ARTsie action." } };
     }
     const signal = AbortSignal.timeout(input.action === "import" ? 180_000 : 155_000);
@@ -89,7 +95,7 @@ export function createArtsieClient(fetch: typeof globalThis.fetch = globalThis.f
           message: signal.aborted
             ? "ARTsie timed out. The action may have completed; check the files or editor before retrying."
             : cause instanceof TypeError
-              ? "ARTsie is offline on this Beta host. Open ARTsie.app, then refresh."
+              ? "ARTsie is offline on this host. Open ARTsie.app, then refresh."
               : cause instanceof Error
                 ? cause.message
                 : "ARTsie is unavailable.",
@@ -97,4 +103,43 @@ export function createArtsieClient(fetch: typeof globalThis.fetch = globalThis.f
       };
     }
   };
+}
+
+/** The authenticated panel: workspace and app actions, never arbitrary native tool calls. */
+export function createArtsieClient(fetch: typeof globalThis.fetch = globalThis.fetch) {
+  const transport = createArtsieTransport(fetch, ACTIONS);
+  return (input: BetaArtsieInput): Promise<BetaBrainResponse> => transport(input);
+}
+
+// Agent tools mirror ARTsie's own MCP gateway (artsie.py TOOLS). The native file
+// picker (import) and Finder (reveal) stay with the human panel.
+const AGENT_ACTIONS = new Set([
+  "apps",
+  "files",
+  "mkdir",
+  "copy",
+  "rename",
+  "launch",
+  "start_live",
+  "tools",
+  "call",
+]);
+export type ArtsieAgentAction =
+  | "apps"
+  | "files"
+  | "mkdir"
+  | "copy"
+  | "rename"
+  | "launch"
+  | "start_live"
+  | "tools"
+  | "call";
+
+/** The agent MCP toolkit: the same hub, adding discovered native tool calls. */
+export function createArtsieAgentClient(fetch: typeof globalThis.fetch = globalThis.fetch) {
+  const transport = createArtsieTransport(fetch, AGENT_ACTIONS);
+  return (
+    action: ArtsieAgentAction,
+    args: Readonly<Record<string, unknown>>,
+  ): Promise<BetaBrainResponse> => transport({ action, args });
 }

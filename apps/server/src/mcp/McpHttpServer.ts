@@ -24,6 +24,8 @@ import packageJson from "../../package.json" with { type: "json" };
 import * as ServerConfig from "../config.ts";
 import { BrainToolkit } from "./toolkits/brain/tools.ts";
 import * as BrainHandlers from "./toolkits/brain/handlers.ts";
+import { ArtsieToolkit } from "./toolkits/artsie/tools.ts";
+import * as ArtsieHandlers from "./toolkits/artsie/handlers.ts";
 import * as DeviceService from "../device/DeviceService.ts";
 import * as HtmlRender from "../htmlRender/HtmlRender.ts";
 import * as ThreadCommandExecutor from "../orchestration-v2/ThreadCommandExecutor.ts";
@@ -996,6 +998,8 @@ export const layerPreviewToolkit = Layer.mergeAll(
 );
 
 export const layerBrainToolkit = toolkitRegistration(BrainToolkit, BrainHandlers.layer);
+
+export const layerArtsieToolkit = toolkitRegistration(ArtsieToolkit, ArtsieHandlers.layer);
 
 export const layerOrchestratorToolkit = toolkitRegistration(
   OrchestratorToolkit,

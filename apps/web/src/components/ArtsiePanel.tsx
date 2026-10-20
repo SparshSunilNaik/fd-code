@@ -561,12 +561,13 @@ export function ArtsiePanel() {
                       <div className="rounded-xl border bg-card p-4">
                         <h3 className="text-sm font-medium">Real tools for your assistant</h3>
                         <p className="mt-2 text-sm text-muted-foreground">
-                          Use ARTsie’s MCP connection in your provider client to edit images, video,
-                          audio, and documents. Your provider supplies the model and its approvals.
+                          Claude and Codex chats here get ARTsie’s tools automatically (t3_artsie_*)
+                          to edit images, video, audio, and documents. Listing apps and files works
+                          in any thread; starting editors and calling app tools needs a full-access
+                          thread.
                         </p>
                         <p className="mt-2 text-xs text-muted-foreground">
-                          Opening this panel does not register MCP with a provider. The ready-to-use
-                          connection is in ARTsie/config/mcp.json.
+                          Other MCP clients can use the connection in ARTsie/config/mcp.json.
                         </p>
                       </div>
                       <div className="flex flex-wrap gap-2">

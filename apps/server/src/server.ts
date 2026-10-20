@@ -1,6 +1,7 @@
 import * as ProviderEventLoggers from "@t3tools/provider-core/server/ProviderEventLoggers";
 import * as BetaHttp from "./beta/http.ts";
 import { BetaBrain } from "./beta/Brain.ts";
+import { BetaArtsie } from "./beta/Artsie.ts";
 import * as BrainDirectory from "./brain/BrainDirectory.ts";
 import type { RelayManagedEndpointRuntimeConfig } from "@t3tools/contracts/relay";
 import * as Clock from "effect/Clock";
@@ -697,9 +698,14 @@ const layerMakeRoutes = Layer.mergeAll(
     ServerHttp.layerStaticAndDevRoute,
     Ws.layer,
   ),
-  Layer.merge(McpHttpServer.layer, McpHttpServer.layerBrainToolkit).pipe(
+  Layer.mergeAll(
+    McpHttpServer.layer,
+    McpHttpServer.layerBrainToolkit,
+    McpHttpServer.layerArtsieToolkit,
+  ).pipe(
     Layer.provide(RuntimeLayer.layerBrainMemory),
     Layer.provide(BetaBrain.layer),
+    Layer.provide(BetaArtsie.layer),
     Layer.provide(ProviderAdapterRegistry.layerFromProviderInstanceRegistry),
     Layer.provide(McpOAuth.layerMcpClientAuthenticator),
   ),

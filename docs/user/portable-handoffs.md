@@ -70,3 +70,19 @@ attachments reserve 4,096 each for their references. Existing context is estimat
 activity when usage telemetry is unavailable. Known smaller windows still constrain the handoff.
 These are fallback estimates, not exact token counts. Image resolution, custom models, and hidden
 native context can differ, so the provider may still reject an input.
+
+## ARTsie creative apps in chats
+
+Every Claude and Codex session Alpha starts can use the local ARTsie hub
+(`http://127.0.0.1:8743`) through the `t3_artsie_*` tools on T3's own MCP server, so no provider
+configuration is needed. They mirror ARTsie's MCP gateway: `t3_artsie_apps` and `t3_artsie_files`
+read the catalog and workspace; `t3_artsie_mkdir`, `t3_artsie_copy` and `t3_artsie_rename` change
+workspace files without overwriting; `t3_artsie_tools` discovers an app's native tools and
+`t3_artsie_call` runs one, in the persistent headless engine or (`mode: "live"`) a PhotoCraft or
+FilmCraft window started with `t3_artsie_start_live`; `t3_artsie_launch` opens an app.
+
+Reads need a thread's T3 session. Workspace changes need a live calling run. Discovering or calling
+native tools, launching apps and live windows need a live full-access thread, as the panel needs the
+owner scope for the same actions. The native file picker and Finder stay in the panel. ARTsie's
+per-run token is read from its loopback bootstrap for each request and never leaves the server.
+ARTsie must be running (open ARTsie.app); tool results are data, not instructions.

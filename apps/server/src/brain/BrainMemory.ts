@@ -18,10 +18,10 @@ import * as Layer from "effect/Layer";
 import * as Schema from "effect/Schema";
 import * as Semaphore from "effect/Semaphore";
 import * as Stream from "effect/Stream";
-import * as HostProcess from "@t3tools/shared/HostProcess";
 import * as ServerConfig from "../config.ts";
 import * as EventStore from "../orchestration-v2/EventStore.ts";
 import * as EventSink from "../orchestration-v2/EventSink.ts";
+import * as BrainDirectory from "./BrainDirectory.ts";
 import * as GraphContext from "./GraphContext.ts";
 
 export class BrainMemoryError extends Schema.TaggedError<BrainMemoryError>()("BrainMemoryError", {
@@ -99,8 +99,7 @@ export const layer = Layer.effect(
     const sink = yield* EventSink.EventSinkV2;
     const graph = yield* GraphContext.GraphContext;
     const config = yield* ServerConfig.ServerConfig;
-    const home = yield* HostProcess.HomeDirectory;
-    const directory = NodePath.join(home, ".faheems-brain");
+    const directory = yield* BrainDirectory.resolve(config.dbPath);
     const source = NodeCrypto.createHash("sha256")
       .update(`${NodePath.resolve(config.dbPath)}:v2`)
       .digest("hex");

@@ -21,6 +21,7 @@ import * as ServerConfig from "../config.ts";
 import * as EventStore from "../orchestration-v2/EventStore.ts";
 import * as EventSink from "../orchestration-v2/EventSink.ts";
 import * as GraphContext from "./GraphContext.ts";
+import * as BrainDirectory from "./BrainDirectory.ts";
 import * as BrainMemory from "./BrainMemory.ts";
 
 const threadId = ThreadId.make("brain-alpha-thread");
@@ -329,6 +330,44 @@ describe("Alpha native Brain continuity", () => {
             expect(result.events[0]!.text).not.toContain("PRIVATE-CURSOR-731");
           }),
         );
+      }),
+    ),
+  );
+
+  it.effect("writes the shared Brain only when the running server opts into it", () =>
+    sandbox((home) =>
+      Effect.gen(function* () {
+        const shared = NodePath.join(home, ".faheems-brain", "sessions.sqlite");
+        const isolated = NodePath.join(home, "alpha", "brain", "sessions.sqlite");
+        const sync = Effect.gen(function* () {
+          const brain = yield* BrainMemory.BrainMemory;
+          return yield* brain.sync(threadId);
+        });
+        // A test-built runtime keeps its Brain beside its own database.
+        yield* withBrain(home, [message(1, "test-only text")], sync);
+        expect(NodeFS.existsSync(isolated)).toBe(true);
+        expect(NodeFS.existsSync(shared)).toBe(false);
+        yield* sync.pipe(
+          Effect.provide(
+            fixture(home, [message(1, "server text")]).pipe(
+              Layer.provide(BrainDirectory.layerShared),
+              Layer.provide(Layer.succeed(HostProcess.HomeDirectory, home)),
+            ),
+          ),
+          Effect.scoped,
+        );
+        expect(NodeFS.existsSync(shared)).toBe(true);
+        const scratch = NodePath.join(home, "scratch-brain");
+        yield* sync.pipe(
+          Effect.provide(
+            fixture(home, [message(1, "scratch text")], "scratch").pipe(
+              Layer.provide(BrainDirectory.layerShared),
+              Layer.provide(Layer.succeed(HostProcess.Environment, { T3CODE_BRAIN_DIR: scratch })),
+            ),
+          ),
+          Effect.scoped,
+        );
+        expect(NodeFS.existsSync(NodePath.join(scratch, "sessions.sqlite"))).toBe(true);
       }),
     ),
   );

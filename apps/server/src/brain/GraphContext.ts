@@ -7,6 +7,7 @@ import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as HostProcess from "@t3tools/shared/HostProcess";
+import * as BrainDirectory from "./BrainDirectory.ts";
 
 export class GraphContext extends Context.Service<
   GraphContext,
@@ -20,11 +21,17 @@ export const layer = Layer.effect(
   Effect.gen(function* () {
     const home = yield* HostProcess.HomeDirectory;
     const executable = NodePath.join(home, ".graphify-venv", "bin", "graphify");
-    const brainGraph = NodePath.join(home, ".faheems-brain", "graph", "brain-graph.json");
+    // The curated graph belongs to the shared Brain; isolated compositions use the session graph.
+    const sharedBrain = yield* BrainDirectory.BrainDirectory;
+    const brainGraph =
+      sharedBrain === undefined
+        ? undefined
+        : NodePath.join(sharedBrain, "graph", "brain-graph.json");
     return GraphContext.of({
       query: (query, sessionGraph) =>
         Effect.gen(function* () {
-          const source = NodeFS.existsSync(brainGraph) ? brainGraph : sessionGraph;
+          const source =
+            brainGraph !== undefined && NodeFS.existsSync(brainGraph) ? brainGraph : sessionGraph;
           if (!NodeFS.existsSync(executable) || !NodeFS.existsSync(source)) {
             return {
               status: "unavailable",

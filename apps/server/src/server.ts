@@ -1,6 +1,7 @@
 import * as ProviderEventLoggers from "@t3tools/provider-core/server/ProviderEventLoggers";
 import * as BetaHttp from "./beta/http.ts";
 import { BetaBrain } from "./beta/Brain.ts";
+import * as BrainDirectory from "./brain/BrainDirectory.ts";
 import type { RelayManagedEndpointRuntimeConfig } from "@t3tools/contracts/relay";
 import * as Clock from "effect/Clock";
 import * as Random from "effect/Random";
@@ -1072,6 +1073,10 @@ const layerMakeServer = Layer.unwrap(
       Layer.provideMerge(layerPlatformServices),
     );
   }),
-).pipe(Layer.provide(ProcessRunner.layer));
+).pipe(
+  Layer.provide(ProcessRunner.layer),
+  // Only the running server mirrors into the shared ~/.faheems-brain.
+  Layer.provide(BrainDirectory.layerShared),
+);
 
 export const runServer = Layer.launch(layerMakeServer);

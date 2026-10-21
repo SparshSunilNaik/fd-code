@@ -44,6 +44,8 @@ The Brain tab searches your local knowledge and shows its source dates and colle
 
 Agents use the read-only `beta_brain_read` tool. The desktop backend reads the existing Brain token; it does not expose it to the renderer or models. The live session store is separate from indexed document snapshots and the agent mailbox. It lives locally under `~/.faheems-brain`; keep it with your Beta data backups. Fresh Brain MCP processes can discover and read it through `brain_session_list` and `brain_session_read`; an already running Brain MCP service needs a restart to load those new tools. Beta’s current-session `beta_session_memory` reads the same store directly and does not require that restart. Provider continuation bookmarks remain private to the backend.
 
+`beta_rag` also queries a Graphify knowledge graph of the Brain at `~/.faheems-brain/graph/brain-graph.json`. To install Graphify once, from this Beta checkout run `node scripts/beta-graphify-setup.mjs`. It uses an existing Python 3.11, creates an isolated environment at `~/.graphify-venv` and installs Graphify v0.9.92 from the fork at https://github.com/faheemdehalvi/graphify. Use `--python /path/to/python` for another installed Python. Without Graphify or the graph file, `beta_rag` still returns session matches and reports which part is missing.
+
 The Brain agent mailbox addresses Claude, Codex or Grok rather than a specific session. Inbound requests are displayed verbatim and require your explicit decision. Approving records the decision; it does not execute the request. This mailbox is separate from Beta’s internal session bus.
 
 ## Recovery and updates

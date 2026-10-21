@@ -101,7 +101,14 @@ const graphQuery = (query: string) =>
   Effect.promise(
     () =>
       new Promise<{ available: boolean; text: string }>((resolve) => {
-        if (!NodeFS.existsSync(BRAIN_GRAPH) || !NodeFS.existsSync(GRAPHIFY_BIN)) {
+        if (!NodeFS.existsSync(GRAPHIFY_BIN)) {
+          resolve({
+            available: false,
+            text: "Graphify is not installed. Run `node scripts/beta-graphify-setup.mjs` in the Beta checkout.",
+          });
+          return;
+        }
+        if (!NodeFS.existsSync(BRAIN_GRAPH)) {
           resolve({ available: false, text: "The brain graph has not been built yet." });
           return;
         }

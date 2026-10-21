@@ -3583,6 +3583,20 @@ describe("ProviderCommandReactor", () => {
 
     await Effect.runPromise(
       harness.engine.dispatch({
+        type: "thread.message.user.append",
+        commandId: CommandId.make("cmd-stopped-provider-switch-history"),
+        threadId: ThreadId.make("thread-1"),
+        message: {
+          messageId: asMessageId("stopped-provider-switch-history"),
+          text: "Keep the existing layout decision.",
+          attachments: [],
+        },
+        createdAt: now,
+      }),
+    );
+
+    await Effect.runPromise(
+      harness.engine.dispatch({
         type: "thread.session.set",
         commandId: CommandId.make("cmd-session-set-stopped-provider-switch"),
         threadId: ThreadId.make("thread-1"),
@@ -3631,7 +3645,7 @@ describe("ProviderCommandReactor", () => {
     expect(harness.startSession.mock.calls[0]?.[1]).not.toHaveProperty("resumeCursor");
     expect(harness.sendTurn).toHaveBeenCalledTimes(1);
     expect(harness.sendTurn.mock.calls[0]?.[0]).toMatchObject({
-      input: expect.stringContaining("Brain session"),
+      input: expect.stringContaining("Keep the existing layout decision."),
     });
     const thread = (await harness.readModel()).threads.find((entry) => entry.id === "thread-1");
     expect(thread?.session?.providerName).toBe("claudeAgent");

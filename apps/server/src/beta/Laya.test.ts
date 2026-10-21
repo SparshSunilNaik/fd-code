@@ -3,7 +3,11 @@ import { it } from "@effect/vitest";
 import * as Effect from "effect/Effect";
 import { chooseLayaDestination, makeLaya, validateLayaChoice } from "./Laya.ts";
 const criteria = { general: "general", web: "web" };
-const response = (choice = "web", probabilities = { general: 0.1, web: 0.9 }, action?: string) => ({
+const response = (
+  choice = "web",
+  probabilities: Record<string, number> = { general: 0.1, web: 0.9 },
+  action: string | { act_probability: number } = { act_probability: 1 },
+) => ({
   answers: { route: { type: "choice", choice, probabilities, ...(action ? { action } : {}) } },
 });
 describe("Laya decision boundary", () => {
@@ -15,6 +19,8 @@ describe("Laya decision boundary", () => {
     });
     for (const raw of [
       response("invented"),
+      response("web", { general: 0.1, web: 0.9 }, { act_probability: 0.2 }),
+      response("web", { general: 0.1, web: 0.9 }, { act_probability: 1.2 }),
       response("general"),
       response("web", { general: 0.1, web: 1.2 }),
       response("web", { general: 0.1, web: 0.1 }),
@@ -35,9 +41,9 @@ describe("Laya decision boundary", () => {
           expect(init?.headers).toMatchObject({ authorization: "Bearer local-test" });
           expect(JSON.parse(String(init?.body))).toMatchObject({
             model: "multilingual",
-            questions: { route: { criteria } },
+            questions: { route: { criteria: { option_0: "general", option_1: "web" } } },
           });
-          return Response.json(response());
+          return Response.json(response("option_1", { option_0: 0.1, option_1: 0.9 }));
         });
         const client = makeLaya({ token: "local-test", fetch });
         expect(yield* client.choose("Find today's news", criteria)).toMatchObject({
@@ -91,6 +97,34 @@ describe("Laya decision boundary", () => {
           choice: "chat-44",
         });
         expect([...examined].filter((key) => key.startsWith("chat-"))).toHaveLength(45);
+        const unrelated = {
+          choose: (_state: string, choices: Readonly<Record<string, string>>) =>
+            Effect.succeed({
+              ok: true as const,
+              choice: Object.hasOwn(choices, "chat-44")
+                ? "chat-44"
+                : Object.keys(choices).find((key) => key !== "none")!,
+              probability: Object.hasOwn(choices, "chat-44") ? 0.95 : 0.2,
+            }),
+        };
+        expect(yield* chooseLayaDestination(unrelated, "Open chat 44", options)).toMatchObject({
+          ok: true,
+          choice: "chat-44",
+          probability: 0.95,
+        });
+        const intentFirst = {
+          choose: (state: string, choices: Readonly<Record<string, string>>) =>
+            Object.hasOwn(choices, "specific")
+              ? Effect.succeed({ ok: true as const, choice: "specific", probability: 0.9 })
+              : client.choose(state, choices),
+        };
+        expect(
+          yield* chooseLayaDestination(intentFirst, "Open chat 44", {
+            general: "ordinary chat",
+            web: "browse websites",
+            ...options,
+          }),
+        ).toMatchObject({ ok: true, choice: "chat-44", probability: 0.9 });
         const uncertain = {
           choose: () => Effect.succeed({ ok: true as const, choice: "none", probability: 0.4 }),
         };

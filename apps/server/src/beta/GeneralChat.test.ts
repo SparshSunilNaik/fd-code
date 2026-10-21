@@ -318,7 +318,7 @@ describe("General chat with real orchestration persistence", () => {
         };
         const invoke = (capabilities: ReadonlySet<"beta">, args: Record<string, unknown> = {}) =>
           toolkit
-            .handle("beta_route_request", args)
+            .handle("beta_route_request", args as Record<string, never>)
             .pipe(
               Stream.unwrap,
               Stream.runCollect,

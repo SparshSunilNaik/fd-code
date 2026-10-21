@@ -7,6 +7,7 @@ import { createRequire } from "node:module";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
+import { restoreUnpackedModes } from "./lib/beta-native-modes.mjs";
 
 const require = createRequire(import.meta.url);
 const asar = require("@electron/asar");
@@ -91,8 +92,12 @@ const sourcePackage = JSON.parse(asar.extractFile(sourceAsar, "package.json").to
 const sourceInfo = readPlist(path.join(sourceApp, "Contents/Info.plist"));
 const sourceHeader = asar.getRawHeader(sourceAsar);
 const commit = run("git", ["rev-parse", "HEAD"], { cwd: repoRoot }).trim();
-if (sourcePackage.t3codeCommitHash !== commit.slice(0, sourcePackage.t3codeCommitHash?.length ?? 0))
-  throw new Error("Installed runtime and repository commits do not match.");
+const runtimeCommit = sourcePackage.t3codeCommitHash;
+if (typeof runtimeCommit !== "string" || !/^[a-f0-9]{7,40}$/.test(runtimeCommit))
+  throw new Error("Installed runtime has no valid source commit.");
+// Local Beta commits extend the installed baseline. Native packages and the
+// Electron version are independently checked below before reusing that runtime.
+run("git", ["merge-base", "--is-ancestor", runtimeCommit, commit], { cwd: repoRoot });
 if (
   sourceInfo.ElectronAsarIntegrity?.["Resources/app.asar"]?.hash !== sha(sourceHeader.headerString)
 )
@@ -151,6 +156,7 @@ const extracted = path.join(stage, "payload");
 console.log("Copying the matching installed runtime into a new staging directory...");
 run("/usr/bin/ditto", [sourceApp, copiedApp]);
 asar.extractAll(sourceAsar, extracted);
+restoreUnpackedModes(sourceAsar, extracted, unpackedFiles);
 const buildInputs = {};
 function walkFiles(root, prefix = "") {
   for (const entry of fs
@@ -168,6 +174,15 @@ for (const relative of ["apps/server/dist", "apps/desktop/dist-electron"]) {
   fs.cpSync(path.join(repoRoot, relative), destination, {
     recursive: true,
     preserveTimestamps: true,
+    // Finder conflict copies are not build outputs. Leave them in the checkout;
+    // copying their cloud placeholders can block packaging indefinitely.
+    filter: (source) => {
+      if (relative !== "apps/desktop/dist-electron") return true;
+      const name = path.basename(source);
+      if (name.endsWith(".map")) return false;
+      const canonical = name.replace(/ \d+(?=\.cjs$)/, "");
+      return canonical === name || !fs.existsSync(path.join(path.dirname(source), canonical));
+    },
   });
   if (relative === "apps/server/dist") {
     // A frontend-only rebuild does not refresh the server bundle's client copy.

@@ -63,6 +63,7 @@ import {
 import * as ProviderReplayHarness from "./ProviderReplayHarness.ts";
 import { checkpointWorkspace } from "@t3tools/provider-testing/replayWorkspace";
 import * as ProviderAdapter from "@t3tools/provider-core/server/ProviderAdapter";
+import * as BrainMemory from "../../brain/BrainMemory.ts";
 
 const encodeJson = Schema.encodeEffect(Schema.fromJsonString(Schema.Unknown));
 
@@ -391,6 +392,106 @@ const waitForIdle = Effect.fn("ProviderSwitchTest.waitForIdle")(function* (
 });
 
 describe("orchestration v2 provider switching", () => {
+  it.live(
+    "delivers on-demand Brain results on resumed turns without replaying them on model changes",
+    () =>
+      Effect.scoped(
+        Effect.gen(function* () {
+          const cwd = yield* checkpointWorkspace("on-demand-brain-context");
+          const capturedTurns = yield* Ref.make<ReadonlyArray<CapturedTurn>>([]);
+          const prepared: Array<{ text: string; switching: boolean }> = [];
+          const registry = ProviderAdapterRegistry.layerFromAdapters([
+            makeTestAdapter({
+              instanceId: CODEX_MODEL_SELECTION.instanceId,
+              driver: CODEX_DRIVER,
+              capabilities: CodexProviderCapabilitiesV2,
+              modelSelection: CODEX_MODEL_SELECTION,
+              responseByRunOrdinal: {},
+              capturedTurns,
+            }),
+          ]);
+          const brainMemory = {
+            prepare: (input) => {
+              prepared.push(input);
+              const requested = input.text.startsWith("/rag ");
+              return Effect.succeed({
+                text: requested ? input.text.slice(5) : input.text,
+                context: requested ? "RETRIEVED_DECISION: keep the migration local" : "",
+              });
+            },
+            sync: () => Effect.succeed(0),
+            read: () => Effect.die("Retrieval is supplied by the Brain service boundary"),
+            rag: () => Effect.die("Retrieval is supplied by the Brain service boundary"),
+          } satisfies BrainMemory.BrainMemory["Service"];
+          yield* Effect.gen(function* () {
+            const orchestrator = yield* Orchestrator.OrchestratorV2;
+            const worker = yield* EffectWorker.OrchestrationEffectWorkerV2;
+            yield* orchestrator.dispatch({
+              type: "thread.create",
+              commandId: CommandId.make("brain:create"),
+              threadId,
+              projectId,
+              createdBy: "user",
+              creationSource: "web",
+              title: "On-demand Brain",
+              modelSelection: CODEX_MODEL_SELECTION,
+              runtimeMode: "full-access",
+              interactionMode: "default",
+              branch: null,
+              worktreePath: null,
+            });
+            for (const [index, text] of [
+              "Initial task",
+              "/rag migration decision",
+              "Continue",
+            ].entries()) {
+              const ordinal = index + 1;
+              yield* orchestrator.dispatch({
+                type: "message.dispatch",
+                commandId: CommandId.make(`brain:turn:${ordinal}`),
+                threadId,
+                messageId: MessageId.make(`brain:message:${ordinal}`),
+                createdBy: "user",
+                creationSource: "web",
+                text,
+                attachments: [],
+                modelSelection:
+                  ordinal === 3
+                    ? { ...CODEX_MODEL_SELECTION, model: "gpt-6.1-sol" }
+                    : CODEX_MODEL_SELECTION,
+                dispatchMode: { type: "start_immediately" },
+              });
+              yield* orchestrator.streamStoredEvents.pipe(
+                Stream.filter(
+                  ({ event }) =>
+                    event.type === "run.updated" &&
+                    event.payload.ordinal === ordinal &&
+                    event.payload.status === "completed",
+                ),
+                Stream.runHead,
+              );
+              yield* worker.drain();
+            }
+            const turns = yield* Ref.get(capturedTurns);
+            assert.equal(turns.length, 3);
+            assert.equal(turns[0]?.text, "Initial task");
+            assert.include(turns[1]?.text, "RETRIEVED_DECISION");
+            assert.include(turns[1]?.text, "migration decision");
+            assert.equal(turns[2]?.text, "Continue");
+            assert.equal(turns[2]?.nativeThreadId, turns[0]?.nativeThreadId);
+            assert.isFalse(prepared[2]?.switching);
+          }).pipe(
+            Effect.provide(
+              ProviderReplayHarness.layerWithRegistry(
+                { name: "on-demand-brain-context", runtimePolicyOverride: { cwd } },
+                registry,
+                { brainMemory },
+              ),
+            ),
+          );
+        }),
+      ),
+  );
   it.live.each([
     "compact-native",
     "compact-fallback",

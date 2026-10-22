@@ -1232,6 +1232,7 @@ export const layer: Layer.Layer<
       const deliverySession =
         effectiveHandoffs.length === 0 &&
         missedItems.length === 0 &&
+        preparedBrainContext.context === "" &&
         restartNote === "" &&
         !noteContinuation
           ? session

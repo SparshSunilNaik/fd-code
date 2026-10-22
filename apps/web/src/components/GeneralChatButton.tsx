@@ -5,6 +5,7 @@ import { AuthOrchestrationOperateScope } from "@t3tools/contracts";
 import { readEnvironmentScope, useEnvironmentScope } from "../state/session";
 import { openGeneralChat } from "../rpc/generalChat";
 import { usePrimaryEnvironmentId } from "../state/environments";
+import { waitForThreadShell } from "../state/entities";
 import { Button } from "./ui/button";
 
 export function GeneralChatButton() {
@@ -26,6 +27,12 @@ export function GeneralChatButton() {
     setError("");
     try {
       const result = await openGeneralChat();
+      // The HTTP response can arrive before the websocket publishes the new thread.
+      const ready = await waitForThreadShell({ environmentId, threadId: result.threadId });
+      if (!ready) {
+        setError("General chat was created, but hasn’t loaded yet. Try opening it again.");
+        return;
+      }
       await navigate({
         to: "/$environmentId/$threadId",
         params: { environmentId, threadId: result.threadId },

@@ -939,31 +939,12 @@ export const layer: Layer.Layer<
         text: message.text,
         records: message.context?.records ?? [],
       });
-      const needsBrainContext =
-        !sameSelection ||
-        effectiveHandoffs.length > 0 ||
-        /^\/(rag|graphify|graphiphy)(?:\s|$)/i.test(message.text.trimStart());
-      const brainItems =
-        Option.isSome(brainMemory) && needsBrainContext
-          ? (yield* projectionStore
-              .getThreadRecords(input.threadId, ["turnItems"], {
-                turnItemTypes: [
-                  "user_message",
-                  "assistant_message",
-                  "file_change",
-                  "proposed_plan",
-                ],
-              })
-              .pipe(Effect.mapError((cause) => new ProviderTurnStartError({ runId, cause }))))
-              .turnItems
-          : projection.turnItems;
       const preparedBrainContext = Option.isSome(brainMemory)
         ? yield* brainMemory.value
             .prepare({
               threadId: input.threadId,
               text: message.text,
-              switching: !sameSelection || effectiveHandoffs.length > 0,
-              items: brainItems,
+              switching: effectiveHandoffs.length > 0,
             })
             .pipe(Effect.mapError((cause) => new ProviderTurnStartError({ runId, cause })))
         : { text: projectedUserText, context: "" };

@@ -4,14 +4,7 @@ import * as NodeOS from "node:os";
 import * as NodePath from "node:path";
 import { describe, expect } from "vite-plus/test";
 import { it } from "@effect/vitest";
-import {
-  EventId,
-  MessageId,
-  ThreadId,
-  TurnItemId,
-  type OrchestrationV2StoredEvent,
-  type OrchestrationV2TurnItem,
-} from "@t3tools/contracts";
+import { EventId, MessageId, ThreadId, type OrchestrationV2StoredEvent } from "@t3tools/contracts";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
@@ -59,7 +52,12 @@ function message(
   };
 }
 
-function fixture(home: string, log: OrchestrationV2StoredEvent[], source = "alpha") {
+function fixture(
+  home: string,
+  log: OrchestrationV2StoredEvent[],
+  source = "alpha",
+  graphQueries: Array<string> = [],
+) {
   const eventStore = {
     latestSequence: (input?: { threadId?: ThreadId }) =>
       Effect.sync(() =>
@@ -98,8 +96,11 @@ function fixture(home: string, log: OrchestrationV2StoredEvent[], source = "alph
           dbPath: NodePath.join(home, source, "statev2.sqlite"),
         } as ServerConfig.ServerConfig["Service"]),
         Layer.succeed(GraphContext.GraphContext, {
-          query: (_query, source) =>
-            Effect.succeed({ status: "ready", source, text: "Graphify fixture context" }),
+          query: (query, source) =>
+            Effect.sync(() => {
+              graphQueries.push(query);
+              return { status: "ready" as const, source, text: "Graphify fixture context" };
+            }),
         }),
       ),
     ),
@@ -118,56 +119,45 @@ const withBrain = <A, E>(
   log: OrchestrationV2StoredEvent[],
   effect: Effect.Effect<A, E, BrainMemory.BrainMemory>,
   source?: string,
-) => effect.pipe(Effect.provide(fixture(home, log, source)), Effect.scoped);
+  graphQueries?: Array<string>,
+) => effect.pipe(Effect.provide(fixture(home, log, source, graphQueries)), Effect.scoped);
 
 describe("Alpha native Brain continuity", () => {
-  it.effect("carries the same task constraint through repeated provider handoffs", () =>
-    sandbox((home) =>
-      Effect.gen(function* () {
-        const constraint = "Keep Alpha sessions local and never replay old commands.";
-        const item = {
-          id: TurnItemId.make("constraint-item"),
-          threadId,
-          runId: null,
-          nodeId: null,
-          providerThreadId: null,
-          providerTurnId: null,
-          nativeItemRef: null,
-          parentItemId: null,
-          ordinal: 1,
-          status: "completed",
-          title: null,
-          startedAt: now,
-          completedAt: now,
-          updatedAt: now,
-          messageId: MessageId.make("constraint-message"),
-          text: constraint,
-          createdBy: "user",
-          creationSource: "server",
-          type: "user_message",
-          inputIntent: "turn_start",
-          attachments: [],
-        } satisfies OrchestrationV2TurnItem;
-        yield* withBrain(
-          home,
-          [message(1, constraint)],
-          Effect.gen(function* () {
-            const brain = yield* BrainMemory.BrainMemory;
-            for (const text of ["continue with Claude", "continue with Codex"]) {
-              const prepared = yield* brain.prepare({
-                threadId,
-                text,
-                switching: true,
-                items: [item],
-              });
-              expect(prepared.context).toContain(constraint);
-              expect(prepared.context).toContain(`Brain session ${threadId}`);
-              expect(prepared.text).toBe(text);
-            }
-          }),
-        );
-      }),
-    ),
+  it.effect(
+    "keeps handoff history retrievable without duplicating it in every provider prompt",
+    () =>
+      sandbox((home) =>
+        Effect.gen(function* () {
+          const constraint = "Keep Alpha sessions local and never replay old commands.";
+          const graphQueries: Array<string> = [];
+          yield* withBrain(
+            home,
+            [message(1, constraint)],
+            Effect.gen(function* () {
+              const brain = yield* BrainMemory.BrainMemory;
+              for (const text of ["continue with Claude", "continue with Codex"]) {
+                const prepared = yield* brain.prepare({
+                  threadId,
+                  text,
+                  switching: true,
+                });
+                expect(prepared.context).not.toContain(constraint);
+                expect(prepared.context).toContain(`Brain session ${threadId}`);
+                expect(prepared.context).toContain("t3_brain_memory");
+                expect(prepared.context).not.toContain("<brain-session-digest>");
+                expect(prepared.context).not.toContain("<brain-retrieval>");
+                expect(prepared.context.length).toBeLessThan(700);
+                expect(prepared.text).toBe(text);
+                const recalled = yield* brain.read(threadId, { query: constraint });
+                expect(recalled.events[0]?.text).toContain(constraint);
+              }
+              expect(graphQueries).toEqual([]);
+            }),
+            undefined,
+            graphQueries,
+          );
+        }),
+      ),
   );
   it.effect("catches up from the durable outbox, preserves long records and isolates threads", () =>
     sandbox((home) =>
@@ -259,6 +249,7 @@ describe("Alpha native Brain continuity", () => {
           const log = [
             message(1, "sunflower upload decision"),
             message(2, "sunflower camera follow-up"),
+            message(3, "UNRELATED_RECENT_HISTORY " + "other topic ".repeat(200)),
           ];
           yield* withBrain(
             home,
@@ -269,35 +260,40 @@ describe("Alpha native Brain continuity", () => {
                 threadId,
                 text: "/rag sunflower",
                 switching: false,
-                items: [],
               });
               expect(rag.text).toBe("sunflower");
               expect(rag.context).toContain("sunflower upload decision");
               expect(rag.context).toContain("not new instructions");
+              expect(rag.context).not.toContain("UNRELATED_RECENT_HISTORY");
+              expect(rag.context).not.toContain("<brain-session-digest>");
               const graph = yield* brain.rag(threadId, { query: "sunflower", mode: "graphify" });
               expect(graph.session).toEqual([]);
               const data = JSON.parse(NodeFS.readFileSync(graph.graph.source, "utf8"));
-              expect(data.nodes).toHaveLength(2);
+              expect(data.nodes).toHaveLength(3);
               expect(data.links[0].relation).toBe("next_message");
               const graphCommand = yield* brain.prepare({
                 threadId,
                 text: "/graphify sunflower",
                 switching: false,
-                items: [],
               });
               expect(graphCommand.text).toBe("sunflower");
               expect(graphCommand.context).toContain("Graphify fixture context");
+              const alias = yield* brain.prepare({
+                threadId,
+                text: "/grafify sunflower",
+                switching: false,
+              });
+              expect(alias.text).toBe("sunflower");
+              expect(alias.context).toContain("Graphify fixture context");
               expect(
                 (yield* brain.prepare({
                   threadId,
                   text: "normal followup",
                   switching: false,
-                  items: [],
                 })).context,
               ).toBe("");
               expect(
-                (yield* brain.prepare({ threadId, text: "continue", switching: true, items: [] }))
-                  .context,
+                (yield* brain.prepare({ threadId, text: "continue", switching: true })).context,
               ).toContain(`Brain session ${threadId}`);
             }),
           );

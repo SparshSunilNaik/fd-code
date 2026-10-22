@@ -23,3 +23,38 @@ The setup installs Laya 0.4.11 in an isolated environment under `~/.t3/laya`, cr
 Routing applies to plain-text, single-model messages in the primary desktop/web environment. Messages with attachments, thread context, slash commands, or multiple selected models use the normal chat flow. The separate mobile client has not been given a General navigation control in this release.
 
 ARTsie and Brain use their installed local services. Their data, provider credentials, chat histories and Laya tokens are not bundled in the DMG.
+
+## Recall history on demand
+
+Provider switches carry a bounded history handoff. Changing models within a resumed
+provider session keeps its existing context. Neither action automatically adds a
+second Brain digest or runs a graph search.
+
+Use `/rag your question` to search this conversation, or `/graphify your question`
+for graph retrieval. `/grafify` is also accepted. Results are focused and bounded;
+the full saved history remains available for follow-up queries and paging. Agents
+can use `t3_rag` and `t3_brain_memory` when they need additional context.
+
+For a document knowledge base, ask the agent to use the installed RAG skill with
+the knowledge-base name. For a repository graph, ask it to use the Graphify skill
+against that repository. These are separate from conversation recall.
+
+## Hugging Face models
+
+Hugging Face Inference Providers use the same OpenCode integration as OpenRouter.
+On the machine running FD CODE, connect your account:
+
+```sh
+opencode auth login huggingface
+```
+
+Enter a Hugging Face token in OpenCode's credential prompt. The token needs
+**Make calls to Inference Providers** permission. Create it in
+[Hugging Face token settings](https://huggingface.co/settings/tokens); do not paste
+it into a chat or commit it to this repository.
+
+In **Settings → Providers**, enable OpenCode and refresh its model list. Select
+OpenCode in the composer and search for `huggingface/` to choose a supported chat
+model. A listed model does not by itself confirm that the account is authenticated
+or has inference credits. Hugging Face inference uses its own account and billing,
+separately from ChatGPT, Claude, and OpenRouter.

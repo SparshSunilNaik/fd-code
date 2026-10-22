@@ -11,6 +11,7 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import { McpSchema, McpServer } from "effect/ai";
 import * as BetaArtsie from "../../../beta/Artsie.ts";
+import * as ArtsieCli from "../../../beta/ArtsieCli.ts";
 import * as ThreadManagement from "../../../orchestration-v2/ThreadManagementService.ts";
 import * as McpHttpServer from "../../McpHttpServer.ts";
 import * as McpInvocationContext from "../../McpInvocationContext.ts";
@@ -70,6 +71,15 @@ const withToolkit = <A, E>(
         Layer.provideMerge(McpServer.McpServer.layer),
         Layer.provide(NodeCrypto.layer),
         Layer.provide(
+          Layer.succeed(ArtsieCli.ArtsieCli, {
+            run: (argv) =>
+              Effect.sync(() => {
+                harness.requests.push({ action: "cli", args: argv });
+                return { exitCode: 0, result: { ok: true } };
+              }),
+          }),
+        ),
+        Layer.provide(
           Layer.mock(ThreadManagement.ThreadManagementService)({
             getThreadShell: (id) =>
               Effect.sync(() => liveThreadShell(id, { runtimeMode: harness.runtimeMode })),
@@ -98,6 +108,7 @@ it("exposes ARTsie's gateway actions, without the human-only picker or Finder", 
   expect(Object.keys(ArtsieToolkit.tools).toSorted()).toEqual([
     "t3_artsie_apps",
     "t3_artsie_call",
+    "t3_artsie_cli",
     "t3_artsie_copy",
     "t3_artsie_files",
     "t3_artsie_launch",
@@ -203,6 +214,32 @@ it.effect("reports hub failures to the model as tool errors", () => {
       const result = yield* call("t3_artsie_apps", {});
       expect(result.isError).toBe(true);
       expect(JSON.stringify(result.content)).toContain("ARTsie is offline on this host.");
+    }),
+  );
+});
+
+it.effect("gates the unified CLI and forwards argv without shell interpretation", () => {
+  const harness = makeHarness();
+  return withToolkit(harness, (call) =>
+    Effect.gen(function* () {
+      const argv = [
+        "call",
+        "photocraft",
+        "doc_export",
+        "--input",
+        '{"path":"/Exports/a $(touch nope).png"}',
+      ];
+      harness.runtimeMode = "approval-required";
+      expect((yield* call("t3_artsie_cli", { argv })).isError).toBe(true);
+      expect(harness.requests).toEqual([]);
+      harness.runtimeMode = "full-access";
+      const result = yield* call("t3_artsie_cli", { argv });
+      expect(result.isError).not.toBe(true);
+      expect(result.structuredContent).toMatchObject({
+        ok: true,
+        value: { exitCode: 0, result: { ok: true } },
+      });
+      expect(harness.requests).toEqual([{ action: "cli", args: argv }]);
     }),
   );
 });

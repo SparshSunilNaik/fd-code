@@ -5,6 +5,13 @@ need a separate branch and working directory.
 
 ## Start a thread
 
+**General chat** stays at the top of the web and desktop sidebar. Open it to ask a
+question or describe the work you want to continue. A clear project and session
+match forwards your question and opens that existing chat, keeping its provider
+and permissions. Uncertain matches and busy destinations stay in General. Name
+the project and chat when several conversations cover the same topic. Attachments
+and contextual composer inputs stay with General rather than being forwarded.
+
 On web and desktop, a new thread keeps the current project and carries your model
 and mode selections, unless the destination project has its own model default.
 Its branch and workspace mode come from your configured defaults. To continue in

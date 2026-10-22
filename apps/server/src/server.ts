@@ -1,7 +1,10 @@
 import * as ProviderEventLoggers from "@t3tools/provider-core/server/ProviderEventLoggers";
 import * as BetaHttp from "./beta/http.ts";
+import * as GeneralChat from "./beta/GeneralChat.ts";
+import * as GeneralChatPositions from "./orchestration-v2/TurnItemPositionStore.ts";
 import { BetaBrain } from "./beta/Brain.ts";
 import { BetaArtsie } from "./beta/Artsie.ts";
+import * as ArtsieCli from "./beta/ArtsieCli.ts";
 import * as BrainDirectory from "./brain/BrainDirectory.ts";
 import type { RelayManagedEndpointRuntimeConfig } from "@t3tools/contracts/relay";
 import * as Clock from "effect/Clock";
@@ -685,7 +688,17 @@ const layerMakeRoutes = Layer.mergeAll(
       Layer.provide(OrchestrationHttp.layer),
       Layer.provide(PullRequestHttp.layer),
       Layer.provide(ProjectHttp.layer),
-      Layer.provide(BetaHttp.layer.pipe(Layer.provide(BetaBrain.layer))),
+      Layer.provide(
+        BetaHttp.layer.pipe(
+          Layer.provide(BetaBrain.layer),
+          Layer.provide(
+            GeneralChat.layer.pipe(
+              Layer.provide(RuntimeLayer.layerEventSink),
+              Layer.provide(GeneralChatPositions.layer),
+            ),
+          ),
+        ),
+      ),
       Layer.provide(ServerHttp.layerServerEnvironmentHttpApi),
       Layer.provide(WebhookRoute.layer.pipe(Layer.provide(RelayDeliveryProof.layer))),
       Layer.provide(AuthHttp.layerAuthenticatedAuth),
@@ -706,6 +719,7 @@ const layerMakeRoutes = Layer.mergeAll(
     Layer.provide(RuntimeLayer.layerBrainMemory),
     Layer.provide(BetaBrain.layer),
     Layer.provide(BetaArtsie.layer),
+    Layer.provide(ArtsieCli.layer.pipe(Layer.provide(ProcessRunner.layer))),
     Layer.provide(ProviderAdapterRegistry.layerFromProviderInstanceRegistry),
     Layer.provide(McpOAuth.layerMcpClientAuthenticator),
   ),

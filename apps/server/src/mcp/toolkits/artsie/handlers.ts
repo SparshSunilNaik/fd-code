@@ -1,6 +1,7 @@
 import { OrchestratorMcpFailure } from "@t3tools/contracts";
 import * as Effect from "effect/Effect";
 import * as BetaArtsie from "../../../beta/Artsie.ts";
+import * as ArtsieCli from "../../../beta/ArtsieCli.ts";
 import type { ArtsieAgentAction } from "../../../beta/ArtsieClient.ts";
 import * as McpInvocationContext from "../../McpInvocationContext.ts";
 import * as McpToolAccess from "../../McpToolAccess.ts";
@@ -61,6 +62,22 @@ const handlers = {
   t3_artsie_start_live: hostAction("start_live"),
   t3_artsie_tools: hostAction("tools"),
   t3_artsie_call: hostAction("call"),
+  t3_artsie_cli: McpToolAccess.writesWithCapability((input) =>
+    Effect.gen(function* () {
+      yield* artsieCaller;
+      yield* assertFullAccess(yield* loadCaller(), fullAccessRequired);
+      const cli = yield* ArtsieCli.ArtsieCli;
+      const value = yield* cli
+        .run(input.argv)
+        .pipe(
+          Effect.mapError(
+            (error) =>
+              new OrchestratorMcpFailure({ code: "orchestration_error", message: error.message }),
+          ),
+        );
+      return { ok: true as const, value };
+    }),
+  ),
 } satisfies McpToolAccess.Handlers<typeof ArtsieToolkit.tools>;
 
 export const layer = McpToolAccess.toLayer(ArtsieToolkit, handlers);

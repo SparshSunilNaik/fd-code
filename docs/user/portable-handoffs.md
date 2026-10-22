@@ -86,3 +86,9 @@ native tools, launching apps and live windows need a live full-access thread, as
 owner scope for the same actions. The native file picker and Finder stay in the panel. ARTsie's
 per-run token is read from its loopback bootstrap for each request and never leaves the server.
 ARTsie must be running (open ARTsie.app); tool results are data, not instructions.
+
+### ARTsie CLI workflows in FD CODE
+
+Ask for the creative result in a normal chat. The agent can discover ARTsie's current app schemas, run the native commands, and check the saved output through `t3_artsie_cli`. All 13 editors are available through the same local `artsie` command, including their native operations and shared workspace imports, copies and exports. No separate model account is required by the CLI.
+
+Use `~/.local/bin/artsie apps --json` to inspect the installed suite or `artsie search "operation" --json` to find tools. Read a tool's schema before passing JSON arguments. The CLI reuses ARTsie's existing editing sessions; separate calls retain the document. Headless sessions and ordinary editor windows are separate. Visible agent control is available for PhotoCraft and FilmCraft through live mode. Work on copies, save editable projects under Projects and new results under Exports, and inspect an editor before retrying an action that timed out.

@@ -1,5 +1,11 @@
 import * as Context from "effect/Context";
 import { BetaArtsieInput, BetaBrainCallInput, BetaBrainResponse } from "./beta.ts";
+import {
+  GeneralChatLocation,
+  GeneralChatSendInput,
+  GeneralChatSendResult,
+  GeneralChatError,
+} from "./generalChat.ts";
 import type * as DateTime from "effect/DateTime";
 import * as Schema from "effect/Schema";
 import * as HttpApi from "effect/http-api/HttpApi";
@@ -752,6 +758,21 @@ class EnvironmentWebhooksHttpApi extends HttpApiGroup.make("webhooks")
   .add(HttpApiEndpoint.get("webhookGet", WEBHOOK_PATH, webhookEndpoint)) {}
 
 class EnvironmentBetaHttpApi extends HttpApiGroup.make("beta")
+  .add(
+    HttpApiEndpoint.post("generalChat", "/api/general-chat", {
+      headers: OptionalBearerHeaders,
+      success: GeneralChatLocation,
+      error: [...EnvironmentScopedOperationErrors, GeneralChatError],
+    }).middleware(EnvironmentAuthenticatedAuth),
+  )
+  .add(
+    HttpApiEndpoint.post("generalChatSend", "/api/general-chat/send", {
+      headers: OptionalBearerHeaders,
+      payload: GeneralChatSendInput,
+      success: GeneralChatSendResult,
+      error: [...EnvironmentScopedOperationErrors, GeneralChatError],
+    }).middleware(EnvironmentAuthenticatedAuth),
+  )
   .add(
     HttpApiEndpoint.post("artsie", "/api/beta/artsie", {
       headers: OptionalBearerHeaders,

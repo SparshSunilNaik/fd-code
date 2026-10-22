@@ -3,6 +3,7 @@ import {
   AuthFilesystemReadScope,
   AuthFilesystemWriteScope,
   AuthOrchestrationReadScope,
+  AuthOrchestrationOperateScope,
   type BetaArtsieInput,
   EnvironmentHttpApi,
 } from "@t3tools/contracts";
@@ -10,6 +11,7 @@ import * as Effect from "effect/Effect";
 import * as HttpApiBuilder from "effect/http-api/HttpApiBuilder";
 import { annotateEnvironmentRequest, requireEnvironmentScope } from "../auth/http.ts";
 import { BetaBrain } from "./Brain.ts";
+import { GeneralChat } from "./GeneralChat.ts";
 import { createArtsieClient } from "./ArtsieClient.ts";
 
 // Reading the workspace is a filesystem read and changing it a filesystem write. Actions
@@ -38,8 +40,25 @@ export const layer = HttpApiBuilder.group(
   "beta",
   Effect.fnUntraced(function* (handlers) {
     const brain = yield* BetaBrain;
+    const general = yield* GeneralChat;
     const artsie = createArtsieClient();
     return handlers
+      .handle(
+        "generalChat",
+        Effect.fn("general.open")(function* (args) {
+          yield* annotateEnvironmentRequest(args.endpoint.name);
+          yield* requireEnvironmentScope(AuthOrchestrationOperateScope);
+          return yield* general.open;
+        }),
+      )
+      .handle(
+        "generalChatSend",
+        Effect.fn("general.send")(function* (args) {
+          yield* annotateEnvironmentRequest(args.endpoint.name);
+          yield* requireEnvironmentScope(AuthOrchestrationOperateScope);
+          return yield* general.send(args.payload);
+        }),
+      )
       .handle(
         "artsie",
         Effect.fn("beta.artsie")(function* (args) {

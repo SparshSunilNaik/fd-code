@@ -1,3 +1,14 @@
+# FD CODE
+
+This repository now ships the current **FD CODE** app, based on the newer Alpha codebase, with General chat, local Laya routing, Brain continuity and ARTsie integration.
+
+- [Download the macOS Apple Silicon DMG](https://github.com/faheemdehalvi/t3-beta/releases/latest)
+- [Installation and General/Laya setup](docs/user/fd-code.md)
+
+The older Beta implementation remains in Git history. Upstream T3 Code documentation follows below; upstream downloads are not this customised build.
+
+---
+
 # T3 Code
 
 This is Faheem's Alpha source fork of [T3 Code](https://github.com/pingdotgg/t3code), with native

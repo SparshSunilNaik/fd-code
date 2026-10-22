@@ -2,6 +2,7 @@ import { modelSelectionsEqual } from "@t3tools/shared/model";
 import { projectComposerContextForProvider } from "@t3tools/shared/composerContextReferences";
 import {
   CommandId,
+  GENERAL_CHAT_THREAD_PREFIX,
   latestProviderTurnForAttempt,
   type OrchestrationV2DomainEvent,
   type OrchestrationV2ExecutionNode,
@@ -956,7 +957,7 @@ export const layer: Layer.Layer<
               .pipe(Effect.mapError((cause) => new ProviderTurnStartError({ runId, cause }))))
               .turnItems
           : projection.turnItems;
-      const brainContext = Option.isSome(brainMemory)
+      const preparedBrainContext = Option.isSome(brainMemory)
         ? yield* brainMemory.value
             .prepare({
               threadId: input.threadId,
@@ -966,6 +967,17 @@ export const layer: Layer.Layer<
             })
             .pipe(Effect.mapError((cause) => new ProviderTurnStartError({ runId, cause })))
         : { text: projectedUserText, context: "" };
+      const brainContext = {
+        ...preparedBrainContext,
+        context: [
+          input.threadId.startsWith(GENERAL_CHAT_THREAD_PREFIX)
+            ? "This is the application's pinned General chat. Answer ordinary questions conversationally. For current information, use available web tools and cite successful results. The application attempts local routing before text-only turns; a request that reaches you stayed in General. When its intended project or session is unclear, ask a short clarifying question and offer relevant existing chats if available. Never claim a chat switch or web search without a successful tool result."
+            : "",
+          preparedBrainContext.context,
+        ]
+          .filter(Boolean)
+          .join("\n\n"),
+      };
       const userText = Option.isSome(brainMemory)
         ? projectComposerContextForProvider({
             text: brainContext.text,

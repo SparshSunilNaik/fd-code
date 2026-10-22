@@ -5,15 +5,42 @@ import {
   type TimelineEntriesProjection,
 } from "../session-logic";
 
+function sameItems<T>(
+  left: ReadonlyArray<T> | undefined,
+  right: ReadonlyArray<T> | undefined,
+): boolean {
+  return (
+    left === right ||
+    (left?.length === right?.length &&
+      left !== undefined &&
+      right !== undefined &&
+      left.every((item, index) => item === right[index]))
+  );
+}
+
+function sameAttachments(
+  left: TimelineEntriesInput["attachmentUrlById"],
+  right: TimelineEntriesInput["attachmentUrlById"],
+): boolean {
+  return (
+    left === right ||
+    (left !== undefined &&
+      right !== undefined &&
+      left.size === right.size &&
+      [...left].every(([key, value]) => right.get(key) === value))
+  );
+}
+
+// Equivalent containers must settle without another render; item identity still detects updates.
 function sameInput(left: TimelineEntriesInput, right: TimelineEntriesInput): boolean {
   return (
-    left.visibleTurnItems === right.visibleTurnItems &&
-    left.optimisticMessages === right.optimisticMessages &&
-    left.anchoredMessages === right.anchoredMessages &&
-    left.attachmentUrlById === right.attachmentUrlById &&
-    left.attempts === right.attempts &&
-    left.nodes === right.nodes &&
-    left.plans === right.plans
+    sameItems(left.visibleTurnItems, right.visibleTurnItems) &&
+    sameItems(left.optimisticMessages, right.optimisticMessages) &&
+    sameItems(left.anchoredMessages, right.anchoredMessages) &&
+    sameAttachments(left.attachmentUrlById, right.attachmentUrlById) &&
+    sameItems(left.attempts, right.attempts) &&
+    sameItems(left.nodes, right.nodes) &&
+    sameItems(left.plans, right.plans)
   );
 }
 

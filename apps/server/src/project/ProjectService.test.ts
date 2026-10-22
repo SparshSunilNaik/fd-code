@@ -793,3 +793,38 @@ it.effect("rejects an update that waited on the lock while its project was delet
     );
   }).pipe(Effect.provide(layerProjectServiceDependencies)),
 );
+
+it.effect("bootstraps a missing workspace using the production path owner and reuses it", () =>
+  Effect.gen(function* () {
+    const config = yield* ServerConfig.ServerConfig;
+    const projects = yield* ProjectService.ProjectService;
+    const root = `${config.baseDir}/new-general-workspace`;
+    const input = {
+      projectId: ProjectId.make("bootstrap-new-root"),
+      commandId: CommandId.make("bootstrap-new-root"),
+      title: "General",
+      workspaceRoot: root,
+      createWorkspaceRootIfMissing: true,
+    };
+    const first = yield* projects.bootstrap(input);
+    const second = yield* projects.bootstrap(input);
+    assert.strictEqual(first.created, true);
+    assert.strictEqual(second.created, false);
+    assert.strictEqual(first.project.id, second.project.id);
+    assert.strictEqual(first.project.workspaceRoot, second.project.workspaceRoot);
+  }).pipe(
+    Effect.provide(
+      RuntimeLayer.layerProjectService.pipe(
+        Layer.provideMerge(ProjectEnrichmentService.layer),
+        Layer.provideMerge(WorkspacePaths.layer),
+        Layer.provideMerge(layerMetadata),
+        Layer.provideMerge(SqlitePersistence.layerMemory),
+        Layer.provideMerge(ServerSettings.layerTest()),
+        Layer.provideMerge(
+          ServerConfig.layerTest(process.cwd(), { prefix: "project-bootstrap-missing-" }),
+        ),
+        Layer.provide(NodeServices.layer),
+      ),
+    ),
+  ),
+);

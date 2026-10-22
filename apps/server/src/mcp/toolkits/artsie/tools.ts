@@ -2,6 +2,7 @@ import { ArtsieAppId, ArtsieWorkspacePath, OrchestratorMcpFailure } from "@t3too
 import * as Schema from "effect/Schema";
 import { Tool, Toolkit } from "effect/ai";
 import * as BetaArtsie from "../../../beta/Artsie.ts";
+import * as ArtsieCli from "../../../beta/ArtsieCli.ts";
 import * as ThreadManagementService from "../../../orchestration-v2/ThreadManagementService.ts";
 import * as McpInvocationContext from "../../McpInvocationContext.ts";
 
@@ -93,6 +94,19 @@ const ArtsieCallTool = Tool.make("t3_artsie_call", {
   }),
 }).annotate(Tool.Destructive, true);
 
+const ArtsieCliTool = Tool.make("t3_artsie_cli", {
+  ...shared,
+  description:
+    'Run the unified local ARTsie CLI for all 13 creative apps, sharing their persistent hub sessions. argv is an argument array, never a shell command. Examples: ["apps"], ["search","crop"], ["schema","photocraft","doc_export"], ["photocraft","doc_export","--input","{\\"path\\":\\"/absolute/Exports/result.png\\"}"]. JSON output is automatic. Inspect exitCode and result.ok before claiming success. Discover schemas before editing, preserve originals, and use --mode live only for a window started with t3_artsie_start_live. Supports import, files, copy, move, mkdir, launch, catalog refresh and every native app command. Requires a live full-access/default thread.',
+  parameters: Schema.Struct({
+    argv: Schema.Array(Schema.String.check(Schema.isMaxLength(8192))).check(
+      Schema.isMinLength(1),
+      Schema.isMaxLength(64),
+    ),
+  }),
+  dependencies: [...shared.dependencies, ArtsieCli.ArtsieCli],
+}).annotate(Tool.Destructive, true);
+
 export const ArtsieToolkit = Toolkit.make(
   ArtsieAppsTool,
   ArtsieFilesTool,
@@ -103,4 +117,5 @@ export const ArtsieToolkit = Toolkit.make(
   ArtsieStartLiveTool,
   ArtsieToolsTool,
   ArtsieCallTool,
+  ArtsieCliTool,
 );

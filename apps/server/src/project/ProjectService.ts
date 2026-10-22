@@ -325,6 +325,22 @@ export const make = Effect.gen(function* () {
     return Option.isNone(row) ? Option.none() : Option.some(yield* hydrate(row.value));
   });
 
+  const createAtNormalizedRoot = Effect.fn("ProjectService.createAtNormalizedRoot")(function* (
+    input: ProjectCreateInput,
+    workspaceRoot: string,
+  ) {
+    yield* commit({
+      type: "project.create",
+      commandId: input.commandId,
+      projectId: input.projectId,
+      title: input.title,
+      workspaceRoot,
+      ...(input.scripts === undefined ? {} : { scripts: input.scripts }),
+    });
+    yield* projectEnrichment.invalidate([workspaceRoot]);
+    return yield* readCommitted(input.projectId);
+  });
+
   const create: ProjectService["Service"]["create"] = Effect.fn("ProjectService.create")(
     function* (input) {
       const workspaceRoot = yield* normalizeWorkspaceRoot({
@@ -332,16 +348,7 @@ export const make = Effect.gen(function* () {
         workspaceRoot: input.workspaceRoot,
         createIfMissing: input.createWorkspaceRootIfMissing ?? false,
       });
-      yield* commit({
-        type: "project.create",
-        commandId: input.commandId,
-        projectId: input.projectId,
-        title: input.title,
-        workspaceRoot,
-        ...(input.scripts === undefined ? {} : { scripts: input.scripts }),
-      });
-      yield* projectEnrichment.invalidate([workspaceRoot]);
-      return yield* readCommitted(input.projectId);
+      return yield* createAtNormalizedRoot(input, workspaceRoot);
     },
   );
 
@@ -385,9 +392,21 @@ export const make = Effect.gen(function* () {
 
   const bootstrap: ProjectService["Service"]["bootstrap"] = Effect.fn("ProjectService.bootstrap")(
     function* (input) {
-      const existing = yield* getByWorkspaceRoot(input.workspaceRoot);
-      if (Option.isSome(existing)) return { project: existing.value, created: false };
-      return { project: yield* create(input), created: true };
+      const workspaceRoot = yield* normalizeWorkspaceRoot({
+        projectId: input.projectId,
+        workspaceRoot: input.workspaceRoot,
+        createIfMissing: input.createWorkspaceRootIfMissing ?? false,
+      });
+      const existing = yield* projects
+        .findActiveByWorkspaceRoot(workspaceRoot)
+        .pipe(
+          Effect.mapError(
+            (cause) => new ProjectOperationError({ operation: "list-projects", cause }),
+          ),
+        );
+      if (Option.isSome(existing))
+        return { project: yield* hydrate(existing.value), created: false };
+      return { project: yield* createAtNormalizedRoot(input, workspaceRoot), created: true };
     },
   );
 

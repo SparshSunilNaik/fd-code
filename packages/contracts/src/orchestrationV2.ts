@@ -1083,6 +1083,7 @@ export const OrchestrationV2Notification = Schema.Struct({
 export type OrchestrationV2Notification = typeof OrchestrationV2Notification.Type;
 
 export const OrchestrationV2ConversationMessage = Schema.Struct({
+  generalChatRoute: Schema.optional(GeneralChatRoute),
   notification: Schema.optional(OrchestrationV2Notification),
   ...OrchestrationV2CreationFields,
   scheduledTaskId: Schema.optional(ScheduledTaskId),
@@ -3638,3 +3639,4 @@ export const ProviderReplayNdjsonRecord = Schema.Union([
   ProviderReplayEntry,
 ]);
 export type ProviderReplayNdjsonRecord = typeof ProviderReplayNdjsonRecord.Type;
+import { GeneralChatRoute } from "./generalChat.ts";

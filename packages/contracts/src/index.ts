@@ -67,3 +67,4 @@ export * from "./secretRequest.ts";
 export * from "./clientRpcPermissions.ts";
 export * from "./beta.ts";
 export * from "./brainMemory.ts";
+export * from "./generalChat.ts";

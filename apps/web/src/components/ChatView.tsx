@@ -1,4 +1,6 @@
 import { ThreadFind, ThreadFindCanvas, type ThreadFindControls } from "./chat/ThreadFindProvider";
+import { GENERAL_CHAT_THREAD_PREFIX } from "@t3tools/contracts";
+import { sendGeneralChat } from "../rpc/generalChat";
 import { THREAD_FIND_BAR_RESERVED_HEIGHT } from "./chat/ThreadFindBar";
 import { usageLimitRecoveryBannerItem } from "./chat/UsageLimitRecoveryBanner";
 import {
@@ -1364,6 +1366,7 @@ export default function ChatView(props: ChatViewProps) {
   const attachmentPreviewHandoffByMessageIdRef = useRef<Record<string, string[]>>({});
   const attachmentPreviewPromotionInFlightByMessageIdRef = useRef<Record<string, true>>({});
   const fanoutSelectionsAtom = draftFanoutSelectionsAtom(routeThreadKey);
+  const generalSendRef = useRef<{ key: string; messageId: MessageId } | null>(null);
   const { sendInFlight: sendInFlightRef, uncertainSubmissions: uncertainMultipleSubmissionsRef } =
     draftSendState(routeThreadKey);
   const [resumingThreadKeys, setResumingThreadKeys] = useState<ReadonlySet<string>>(
@@ -6294,6 +6297,76 @@ export default function ChatView(props: ChatViewProps) {
       );
       return;
     }
+    if (
+      isServerThread &&
+      activeThread.id.startsWith(GENERAL_CHAT_THREAD_PREFIX) &&
+      environmentId === primaryEnvironment?.environmentId &&
+      !trimmed.startsWith("/") &&
+      multipleModelSelections === null &&
+      composerImages.length === 0 &&
+      composerFiles.length === 0 &&
+      composerTerminalContexts.length === 0 &&
+      composerPreviewAnnotations.length === 0 &&
+      composerReviewComments.length === 0 &&
+      composerThreadContexts.length === 0
+    ) {
+      const requestKey = `${activeThread.id}:${trimmed}`;
+      if (generalSendRef.current?.key !== requestKey)
+        generalSendRef.current = { key: requestKey, messageId: newMessageId() };
+      sendInFlightRef.current = true;
+      setThreadError(activeThread.id, null);
+      const routingToast = toastManager.add({
+        type: "info",
+        title: "Finding the right conversation…",
+      });
+      try {
+        const result = await sendGeneralChat({
+          threadId: activeThread.id,
+          messageId: generalSendRef.current.messageId,
+          text: trimmed,
+          modelSelection: ctxSelectedModelSelection,
+          runtimeMode,
+          interactionMode: sendInteractionMode,
+        });
+        generalSendRef.current = null;
+        if (
+          useComposerDraftStore.getState().getComposerDraft(composerDraftTarget)?.prompt ===
+          promptForSend
+        ) {
+          clearComposerDraftContent(composerDraftTarget);
+          if (currentRouteThreadKeyRef.current === routeThreadKey) {
+            promptRef.current = "";
+            composerRef.current?.resetCursorState();
+          }
+        }
+        toastManager.add({
+          type: "info",
+          title: result.routed ? result.detail : "Sent in General chat",
+          description: result.routed ? undefined : result.detail,
+        });
+        if (result.routed && currentRouteThreadKeyRef.current === routeThreadKey) {
+          await navigate({
+            to: "/$environmentId/$threadId",
+            params: { environmentId, threadId: result.threadId },
+          }).catch(() => {
+            toastManager.add({
+              type: "warning",
+              title: "Question sent",
+              description: "Use General chat’s link to open the matching conversation.",
+            });
+          });
+        }
+      } catch {
+        setThreadError(
+          activeThread.id,
+          "Couldn’t send from General chat. Your question is still in the composer; try again.",
+        );
+      } finally {
+        sendInFlightRef.current = false;
+        toastManager.close(routingToast);
+      }
+      return;
+    }
     const threadIdForSend = activeThread.id;
     const isFirstMessage = !sendQueuesBehindSetup && (!isServerThread || activeMessageCount === 0);
     const baseBranchForWorktree =
@@ -7936,6 +8009,37 @@ export default function ChatView(props: ChatViewProps) {
               />
             </div>
             <div className="relative flex min-h-0 flex-1 flex-col bg-background">
+              {threadId.startsWith(GENERAL_CHAT_THREAD_PREFIX) && (
+                <div
+                  className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b px-4 py-2 text-xs text-muted-foreground"
+                  style={{
+                    marginInlineStart: "var(--chat-lane-inset-start, 0px)",
+                    marginInlineEnd: "var(--chat-lane-inset-end, 0px)",
+                  }}
+                >
+                  <span>
+                    General chat · Ask anything. Project requests open the matching conversation.
+                  </span>
+                  {(() => {
+                    const last = serverProjection?.messages.findLast(
+                      (message) => message.generalChatRoute,
+                    )?.generalChatRoute;
+                    return last ? (
+                      <button
+                        className="ml-auto shrink-0 underline"
+                        onClick={() =>
+                          void navigate({
+                            to: "/$environmentId/$threadId",
+                            params: { environmentId, threadId: last.targetThreadId },
+                          })
+                        }
+                      >
+                        Open {last.targetTitle}
+                      </button>
+                    ) : null;
+                  })()}
+                </div>
+              )}
               <MessagesTimeline
                 citationRequest={paintOnlyDisplayedTimeline ? null : citationRequest}
                 citationHistoryLoading={threadDetailLoading}

@@ -272,6 +272,15 @@ export const OpenCodeDriver: ProviderDriver<
         directory: host.paths.cwd,
         environment: processEnv,
       }).pipe(
+        Effect.mapError(
+          (cause) =>
+            new ProviderDriverError({
+              driver: DRIVER_KIND,
+              instanceId,
+              detail: "Failed to prepare the OpenCode 2 runtime.",
+              cause,
+            }),
+        ),
         Effect.provideService(OpenCodeRuntime.OpenCodeRuntime, openCodeRuntime),
         Effect.provideService(
           OpenCode2Client.OpenCode2Client,

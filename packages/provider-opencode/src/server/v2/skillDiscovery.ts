@@ -33,7 +33,7 @@ export default {
     await ctx.tool.transform((editor) => editor.add({
       name: "search_skills",
       options: { codemode: false },
-      description: "Search available skill names and descriptions on demand. Returns at most five matches; load full instructions with the native skill tool using an exact returned id.",
+      description: "Call this top-level tool directly, outside execute. Search skill names and descriptions on demand. Returns at most five matches; load full instructions with the native skill tool using an exact returned id.",
       input: { type: "object", properties: { query: { type: "string", minLength: 1 } }, required: ["query"], additionalProperties: false },
       async execute(input, context) {
         const terms = input.query.toLowerCase().split(/\s+/).filter(Boolean);
@@ -55,7 +55,7 @@ export default {
       const text = (value) => value.replace(fullAppInstructions, appInstructions)
         .replace(/<available_skills>[\s\S]*?<\/available_skills>/g, (catalog) => {
           for (const match of catalog.matchAll(/<id>([^<]+)<\/id>/g)) allowed.add(match[1]);
-          return "<available_skills>Skill metadata is retrieved on demand. Use search_skills with focused task keywords, then the native skill tool with a returned exact id. Explicit user skill IDs may be loaded directly. Do not request the entire catalog.</available_skills>";
+          return "<available_skills>Skill metadata is retrieved on demand. Call the top-level search_skills tool directly; it is not inside execute or its catalog. Use focused task keywords, then the native skill tool with a returned exact id. Explicit user skill IDs may be loaded directly. Do not request the entire catalog.</available_skills>";
         });
       for (const part of input.system) {
         if (typeof part.text === "string") part.text = text(part.text);

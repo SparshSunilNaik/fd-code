@@ -421,7 +421,8 @@ export const makeOpenCode2ModelLoader = <E>(
         until: (models) => models.length > 0,
         schedule: Schedule.spaced("250 millis"),
       }),
-      Effect.timeoutOption("5 seconds"),
+      // This includes starting and authenticating a cold server, not only reading its catalog.
+      Effect.timeoutOption("20 seconds"),
       Effect.map((loaded) => {
         if (loaded._tag === "Some" && loaded.value.length > 0) lastLoaded = loaded.value;
         return lastLoaded;

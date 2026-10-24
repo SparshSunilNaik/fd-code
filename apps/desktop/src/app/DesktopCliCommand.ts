@@ -90,7 +90,7 @@ export const make = Effect.gen(function* () {
       const info = yield* fs.stat(link);
       if (info.type !== "File" || Number(info.size) > 16_384) return false;
       const content = yield* fs.readFileString(link);
-      return content.includes(DesktopCliShim.MARKER);
+      return DesktopCliShim.isAppWrittenShim(content);
     }).pipe(Effect.orElseSucceed(() => false));
 
   const powershell = (env: Record<string, string>) =>

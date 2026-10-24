@@ -1000,9 +1000,9 @@ it.effect.each(["win32", "darwin", "linux"] as const)(
     const bounds = { x: 10, y: 20, width: 800, height: 600 };
     const t3 = {
       id: 42,
-      title: "T3 Code",
+      title: "FD CODE",
       appIdentifier: "com.t3tools.T3Code.desktop",
-      owner: { name: "T3 Code", processId: 123 },
+      owner: { name: "FD CODE", processId: 123 },
       bounds,
       png: Buffer.from([1, 2, 3]),
     };
@@ -1676,7 +1676,7 @@ it.effect(
     focusedWindowMock.mockReturnValue(undefined);
     const destination = {
       getBounds: () => ({ x: 0, y: 0, width: 1000, height: 800 }),
-      getTitle: () => "T3 Code",
+      getTitle: () => "FD CODE",
       isDestroyed: () => false,
       isVisible: () => true,
       isMinimized: () => false,
@@ -1692,7 +1692,7 @@ it.effect(
         const warning = logs.find(
           (message) =>
             Array.isArray(message) &&
-            message[0] === "The compositor could not activate T3 Code after the snapshot",
+            message[0] === "The compositor could not activate FD CODE after the snapshot",
         );
         assert.strictEqual(Array.isArray(warning) ? warning[1] : undefined, activationFailure);
         const pending = yield* decodePendingMetadata(saved);
@@ -3228,7 +3228,7 @@ it.effect("flags revoked macOS permissions on read and re-registers once they re
       const revoked = yield* service.state;
       assert.equal(
         revoked.message,
-        "Allow Screen Recording in System Settings, then restart T3 Code.",
+        "Allow Screen Recording in System Settings, then restart FD CODE.",
       );
       assert.deepEqual(revoked.macPermissions, { screenRecording: false, accessibility: true });
 
@@ -3241,7 +3241,7 @@ it.effect("flags revoked macOS permissions on read and re-registers once they re
       const blocked = yield* service.state;
       assert.equal(
         blocked.message,
-        "Allow Screen Recording in System Settings, then restart T3 Code.",
+        "Allow Screen Recording in System Settings, then restart FD CODE.",
       );
       assert.isFalse(blocked.shortcutRegistered);
 
@@ -3947,7 +3947,7 @@ it.effect.each([false, true])(
       platform: "macos",
       id: 42,
       title: "Setup",
-      owner: { name: "T3 Code", processId: 123, path: "/Applications/T3 Code.app" },
+      owner: { name: "FD CODE", processId: 123, path: "/Applications/FD CODE.app" },
       bounds: { x: 0, y: 0, width: 800, height: 600 },
     };
     activeWindowMock.mockReset().mockResolvedValue(active);
@@ -3998,7 +3998,7 @@ const macTestCaptureWindow = {
   platform: "macos",
   id: 42,
   title: "Setup",
-  owner: { name: "T3 Code", processId: 123, path: "/Applications/T3 Code.app" },
+  owner: { name: "FD CODE", processId: 123, path: "/Applications/FD CODE.app" },
   bounds: { x: 0, y: 0, width: 800, height: 600 },
 };
 

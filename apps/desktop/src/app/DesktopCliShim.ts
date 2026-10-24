@@ -10,7 +10,12 @@ import { makeComponentLogger } from "./DesktopObservability.ts";
 // AppImage itself instead of pointing into it.
 const { logInfo, logWarning } = makeComponentLogger("desktop-cli-shim");
 
-export const MARKER = "Written by T3 Code: runs the desktop app's bundled t3 CLI.";
+export const MARKER = "Written by FD CODE: runs the desktop app's bundled t3 CLI.";
+// Launchers written before the rename carry this marker and are still ours to update.
+const LEGACY_MARKER = "Written by T3 Code: runs the desktop app's bundled t3 CLI.";
+
+export const isAppWrittenShim = (content: string) =>
+  content.includes(MARKER) || content.includes(LEGACY_MARKER);
 
 const SERVER_ENTRY = "apps/server/dist/bin.mjs";
 
@@ -19,7 +24,7 @@ const shellWord = (value: string) => `'${value.replaceAll("'", `'"'"'`)}'`;
 const cmdText = (value: string) => value.replaceAll("%", "%%");
 const cmdWord = (value: string) => `"${cmdText(value)}"`;
 
-const MOVED = "T3 Code has moved or been removed. Open the app once to update this command.";
+const MOVED = "FD CODE has moved or been removed. Open the app once to update this command.";
 
 export type CliShimTarget =
   | { readonly kind: "appimage"; readonly appImage: string; readonly executableName: string }
@@ -150,7 +155,7 @@ export const install = Effect.gen(function* () {
 
   return yield* Effect.gen(function* () {
     const existing = yield* fs.readFileString(shimPath).pipe(Effect.option);
-    if (Option.isSome(existing) && !existing.value.includes(MARKER)) {
+    if (Option.isSome(existing) && !isAppWrittenShim(existing.value)) {
       yield* logWarning("leaving a t3 launcher the app did not write", { shimPath });
       return Option.none<string>();
     }

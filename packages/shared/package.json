@@ -331,6 +331,10 @@
       "types": "./src/HostProcess.ts",
       "import": "./src/HostProcess.ts"
     },
+    "./testing/caseSensitiveFs": {
+      "types": "./src/testing/caseSensitiveFs.ts",
+      "import": "./src/testing/caseSensitiveFs.ts"
+    },
     "./testing/longTempDir": {
       "types": "./src/testing/longTempDir.ts",
       "import": "./src/testing/longTempDir.ts"

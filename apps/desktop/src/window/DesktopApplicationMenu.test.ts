@@ -129,7 +129,7 @@ const configureMenu = (
   );
 
 describe("DesktopApplicationMenu", () => {
-  it.effect("keeps display branding in the macOS application menu", () =>
+  it.effect("uses the plain product name in a packaged macOS application menu", () =>
     Effect.gen(function* () {
       const selectedAction = yield* Deferred.make<string>();
       const applicationMenuTemplate =
@@ -143,21 +143,21 @@ describe("DesktopApplicationMenu", () => {
       const template = yield* Deferred.await(applicationMenuTemplate);
       const applicationMenu = template[0];
       assert.isDefined(applicationMenu);
-      assert.equal(applicationMenu.label, "FD CODE (Nightly)");
+      assert.equal(applicationMenu.label, "FD CODE");
       if (!Array.isArray(applicationMenu.submenu)) {
         throw new Error("Expected application menu submenu to be an array.");
       }
       assert.equal(
         applicationMenu.submenu.find((item) => item.role === "about")?.label,
-        "About FD CODE (Nightly)",
+        "About FD CODE",
       );
       assert.equal(
         applicationMenu.submenu.find((item) => item.role === "hide")?.label,
-        "Hide FD CODE (Nightly)",
+        "Hide FD CODE",
       );
       assert.equal(
         applicationMenu.submenu.find((item) => item.role === "quit")?.label,
-        "Quit FD CODE (Nightly)",
+        "Quit FD CODE",
       );
     }),
   );

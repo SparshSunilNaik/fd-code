@@ -1,7 +1,6 @@
 import { expect, it } from "@effect/vitest";
 import * as NodeServices from "@effect/platform-node/NodeServices";
 import {
-  GeneralChatError,
   EventId,
   MessageId,
   OrchestrationV2AppThread,
@@ -133,8 +132,9 @@ const fixture = (mode: "match" | "uncertain" | "unavailable" | "busy" = "match")
         getThreadRecords: (id) => Effect.succeed(state.get(id)!),
         getShellSnapshot: () =>
           Effect.succeed({
+            schemaVersion: 1,
             threads: [...state.keys()].map(shell),
-            updatedAt: at,
+            archivedThreads: [],
             snapshotSequence: 0,
           }),
         getThreadShell: (id) => Effect.succeed(state.has(id) ? shell(id) : null),
@@ -142,13 +142,16 @@ const fixture = (mode: "match" | "uncertain" | "unavailable" | "busy" = "match")
         dispatch: (command) =>
           Effect.sync(() => {
             commands.push(command);
-            return { sequence: 0 };
+            return { sequence: 0, storedEvents: [] };
           }),
         sendToThread: (input) =>
           Effect.gen(function* () {
             if (failNext) {
               failNext = false;
-              return yield* new GeneralChatError({ reason: "operation_failed" });
+              return yield* new Threads.ThreadManagementThreadNotFoundError({
+                projectId: input.projectId,
+                threadId: input.threadId,
+              });
             }
             if (!sent.some((s) => s.commandId === input.commandId)) sent.push(input);
             // GeneralChat consumes only successful completion from this external port.

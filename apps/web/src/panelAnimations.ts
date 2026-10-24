@@ -37,6 +37,27 @@ export function usePanelAnimationSettings(): {
   return { active: durationMs > 0 && !prefersReducedMotion && !suppressed, durationMs };
 }
 
+function shallowEqual(left: unknown, right: unknown): boolean {
+  if (Object.is(left, right)) return true;
+  if (
+    typeof left !== "object" ||
+    typeof right !== "object" ||
+    left === null ||
+    right === null ||
+    Array.isArray(left) ||
+    Array.isArray(right)
+  ) {
+    return false;
+  }
+  const leftEntries = Object.entries(left);
+  return (
+    leftEntries.length === Object.keys(right).length &&
+    leftEntries.every(
+      ([key, item]) => Object.hasOwn(right, key) && Object.is(item, Reflect.get(right, key)),
+    )
+  );
+}
+
 export function usePanelPresence<T>(
   open: boolean,
   value: T | null,
@@ -48,7 +69,9 @@ export function usePanelPresence<T>(
   const [retained, setRetained] = useState<{ scopeKey: string | null; value: T | null } | null>(
     open ? { scopeKey, value } : null,
   );
-  if (open && (retained?.scopeKey !== scopeKey || retained.value !== value)) {
+  // Callers build `value` as a fresh wrapper on every render, so identity alone
+  // would set state on every render and loop forever (React error #301).
+  if (open && (retained?.scopeKey !== scopeKey || !shallowEqual(retained.value, value))) {
     setRetained({ scopeKey, value });
   }
 

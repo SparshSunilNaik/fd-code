@@ -4,12 +4,12 @@ import type {
   RunId,
   ScopedThreadRef,
   ThreadId,
-  WorktreeSetupSnapshot,
 } from "@t3tools/contracts";
 import { workspacePreparationRetryRunIds } from "@t3tools/client-runtime/state/turn-item-presentation";
 import { scopedThreadKey } from "@t3tools/client-runtime/environment";
 import { useState } from "react";
 import { useStableCallback } from "../../hooks/useStableCallback";
+import { useHeldWorktreeSnapshot } from "./useHeldWorktreeSnapshot";
 import { useEnvironmentQuery } from "../../state/query";
 import { threadEnvironment } from "../../state/threads";
 import { useAtomCommand } from "../../state/use-atom-command";
@@ -64,10 +64,6 @@ export function useWorktreeSetup(input: {
     readonly threadId: ThreadId;
     readonly ownerKey: string;
   } | null>(null);
-  // Last live snapshot from the setup stream. The server drops a finished
-  // snapshot after a grace period and emits null; holding it here bridges the
-  // gap until the settled activity arrives on the thread projection.
-  const [heldSnapshot, setHeldSnapshot] = useState<WorktreeSetupSnapshot | null>(null);
   const started = startedSetup !== null && startedSetup.ownerKey === ownerKey;
   // Keep the sending environment during local draft setup; revisiting a
   // canonical thread subscribes by its durable identity.
@@ -84,26 +80,7 @@ export function useWorktreeSetup(input: {
       : null,
   );
   const latestSnapshot = snapshotQuery.data;
-  // A newer snapshot replaces the held one; a late older one for the same
-  // thread does not. Switching routes drops it.
-  const routeKey = scopedThreadKey(routeThreadRef);
-  const [heldFor, setHeldFor] = useState<{
-    readonly routeKey: string;
-    readonly latestSnapshot: WorktreeSetupSnapshot | null | undefined;
-  }>({ routeKey, latestSnapshot: null });
-  if (heldFor.routeKey !== routeKey || heldFor.latestSnapshot !== latestSnapshot) {
-    const routeChanged = heldFor.routeKey !== routeKey;
-    setHeldFor({ routeKey, latestSnapshot });
-    if (routeChanged) {
-      setHeldSnapshot(null);
-    } else if (latestSnapshot) {
-      setHeldSnapshot((current) =>
-        current?.threadId === latestSnapshot.threadId && current.sequence > latestSnapshot.sequence
-          ? current
-          : latestSnapshot,
-      );
-    }
-  }
+  const heldSnapshot = useHeldWorktreeSnapshot(scopedThreadKey(routeThreadRef), latestSnapshot);
   const { snapshot: liveSnapshot, isPreparingWorktree } = resolveWorktreeSetupProgress({
     threadId: target.threadId,
     localPreparing,

@@ -220,14 +220,14 @@ describe("ServerUpdateAction", () => {
     [
       { kind: "npx" },
       "Copy relaunch command",
-      "npx t3@0.0.45",
+      "npx fd-code@0.0.45",
       "Relaunch command copied",
       "This does not update an installed t3 command.",
     ],
     [
       undefined,
       "Copy relaunch command",
-      "npx t3@0.0.45",
+      "npx fd-code@0.0.45",
       "Relaunch command copied",
       "This does not update an installed t3 command.",
     ],

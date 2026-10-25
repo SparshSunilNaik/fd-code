@@ -1,5 +1,5 @@
 {
-  "name": "t3",
+  "name": "fd-code",
   "version": "0.1.0",
   "license": "MIT",
   "repository": {
@@ -8,7 +8,7 @@
     "directory": "apps/server"
   },
   "bin": {
-    "t3": "./dist/bin.mjs"
+    "fd-code": "./dist/bin.mjs"
   },
   "files": [
     "dist"

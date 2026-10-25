@@ -49,13 +49,13 @@ const TEST_ONLY_DEPS = {
     "@fdcode/desktop",
     "@fdcode/mobile",
     "@fdcode/web",
-    "t3",
+    "fd-code",
     "@fdcode/provider-cursor",
   ],
 };
 // Declared dependencies that only feed a build step: the server bundles the
 // built web app (apps/server/vite.config.ts) but never imports it.
-const BUILD_ONLY_DEPS = { t3: ["@fdcode/web"] };
+const BUILD_ONLY_DEPS = { "fd-code": ["@fdcode/web"] };
 
 // Sources scripts/mobile-native-static-check.ts lints, plus the tool and rule
 // configuration that decides how it lints them, plus the root package.json
@@ -176,7 +176,7 @@ function decide(files, packages, full) {
       // Empty means every package the Test job covers.
       test_packages: everything ? "" : tested.map((pkg) => pkg.name).join(" "),
       test_web: has("@fdcode/web"),
-      test_server: has("t3"),
+      test_server: has("fd-code"),
       rust: everything || rust,
       release_smoke: scriptsChanged,
       mobile_native: files === null || files.some((file) => MOBILE_NATIVE.test(file)),

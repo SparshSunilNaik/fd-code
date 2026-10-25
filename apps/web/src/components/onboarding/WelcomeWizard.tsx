@@ -517,7 +517,7 @@ function ConnectAccountOption({
             <p className="text-sm text-muted-foreground">
               Run this on each computer you want to connect.
             </p>
-            <CommandBlock command="npx t3 connect" className="mt-3" />
+            <CommandBlock command="npx fd-code connect" className="mt-3" />
             <p className="mt-3 text-xs text-muted-foreground">
               Keep FD CODE running. Select the computers you want to set up above.
             </p>
@@ -626,9 +626,9 @@ function PairingForm({
             <p className="pt-3 text-sm text-muted-foreground">
               Run this on the computer with your code.
             </p>
-            <CommandBlock command="npx t3 pair" className="mt-2" />
+            <CommandBlock command="npx fd-code pair" className="mt-2" />
             <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-              Start FD CODE first, or run <code className="font-mono">npx t3 serve</code>. Add{" "}
+              Start FD CODE first, or run <code className="font-mono">npx fd-code serve</code>. Add{" "}
               <code className="font-mono">--tailscale</code> to use your tailnet.
             </p>
           </CollapsiblePanel>

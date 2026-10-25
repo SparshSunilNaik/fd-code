@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Builds the `t3` npm package behind `npx t3` / `npm i -g t3`: a launcher
+ * Builds the `t3` npm package behind `npx fd-code` / `npm i -g t3`: a launcher
  * with no dependencies that downloads this exact version's CLI archive from
  * the GitHub Release on first run (scripts/npm-launcher/t3.mjs).
  * The executables are not published to npm. npm's publish-time scanning held

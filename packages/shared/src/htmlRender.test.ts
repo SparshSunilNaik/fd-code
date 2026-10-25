@@ -112,7 +112,7 @@ describe("readHtmlRenderImageRequest", () => {
   it("accepts http(s) and inline image URLs in an open-image notification", () => {
     const image = (params: unknown) => ({
       jsonrpc: "2.0",
-      method: "t3/notifications/open-image",
+      method: "fd-code/notifications/open-image",
       params,
     });
     expect(
@@ -135,7 +135,7 @@ describe("readHtmlRenderKeyDown", () => {
   it("reads the key of a keydown notification and nothing else", () => {
     const notification = (params: unknown) => ({
       jsonrpc: "2.0",
-      method: "t3/notifications/keydown",
+      method: "fd-code/notifications/keydown",
       params,
     });
     expect(readHtmlRenderKeyDown(notification({ key: "k", code: "KeyK", metaKey: true }))).toEqual({

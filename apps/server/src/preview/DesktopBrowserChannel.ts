@@ -58,7 +58,7 @@ export class DesktopBrowserChannel extends Context.Service<
       pointer: { readonly phase: "move" | "click"; readonly x: number; readonly y: number },
     ) => Effect.Effect<void>;
   }
->()("t3/preview/DesktopBrowserChannel") {}
+>()("fd-code/preview/DesktopBrowserChannel") {}
 
 const make = Effect.gen(function* () {
   const config = yield* ServerConfig.ServerConfig;

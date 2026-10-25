@@ -69,7 +69,7 @@ export function makeBrain(client: BrainClient = createBrainClient()) {
 }
 
 export class BetaBrain extends Context.Service<BetaBrain, ReturnType<typeof makeBrain>>()(
-  "t3/beta/Brain/BetaBrain",
+  "fd-code/beta/Brain/BetaBrain",
 ) {
   static readonly layer = Layer.sync(BetaBrain, () => makeBrain());
 }

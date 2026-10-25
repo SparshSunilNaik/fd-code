@@ -209,7 +209,10 @@ describe("third-party license generation", () => {
     const [config, revision] = await Promise.all([
       NodeFSP.readFile(NodePath.join(REPOSITORY_ROOT, "third-party-licenses.config.json"), "utf8"),
       NodeFSP.readFile(
-        NodePath.join(REPOSITORY_ROOT, "apps/mobile/modules/t3-terminal/Vendor/libghostty/VERSION"),
+        NodePath.join(
+          REPOSITORY_ROOT,
+          "apps/mobile/modules/fd-code-terminal/Vendor/libghostty/VERSION",
+        ),
         "utf8",
       ),
     ]);

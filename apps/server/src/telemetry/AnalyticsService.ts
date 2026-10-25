@@ -92,7 +92,7 @@ export class AnalyticsService extends Context.Service<
 
     readonly flush: Effect.Effect<void>;
   }
->()("t3/telemetry/AnalyticsService") {
+>()("fd-code/telemetry/AnalyticsService") {
   static readonly layerTest = Layer.succeed(
     AnalyticsService,
     AnalyticsService.of({

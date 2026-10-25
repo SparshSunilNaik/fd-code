@@ -57,7 +57,7 @@
     "@fdcode/contracts": "workspace:*",
     "@fdcode/mobile-review-diff-native": "file:./modules/t3-review-diff",
     "@fdcode/mobile-source-text": "file:./modules/t3-source-text",
-    "@fdcode/mobile-terminal-native": "file:./modules/t3-terminal",
+    "@fdcode/mobile-terminal-native": "file:./modules/fd-code-terminal",
     "@fdcode/provider-acp-registry": "workspace:*",
     "@fdcode/provider-core": "workspace:*",
     "@fdcode/provider-cursor": "workspace:*",

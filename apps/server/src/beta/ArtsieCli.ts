@@ -63,7 +63,7 @@ export class ArtsieCli extends Context.Service<
       argv: ReadonlyArray<string>,
     ) => Effect.Effect<{ readonly exitCode: number; readonly result: unknown }, ArtsieCliError>;
   }
->()("t3/beta/ArtsieCli") {}
+>()("fd-code/beta/ArtsieCli") {}
 
 const decodeCliOutput = Schema.decodeEffect(Schema.fromJsonString(Schema.Unknown));
 

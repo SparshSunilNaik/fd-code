@@ -33,7 +33,7 @@ https://github.com/Yash-Singh1/ghostty checked out at that revision (the
 `vvterm/custom-io-padding` branch).
 
 ```bash
-apps/mobile/modules/t3-terminal/scripts/build-libghostty-ios16.sh
+apps/mobile/modules/fd-code-terminal/scripts/build-libghostty-ios16.sh
 ```
 
 The script builds Ghostty with Zig 0.16.0, strips the iOS archives, and replaces only the
@@ -46,7 +46,7 @@ The checked-in Android shared libraries and headers are pinned to the revision r
 `native/libghostty-vt/VERSION` at the repository root. Set `ANDROID_NDK_HOME` and run:
 
 ```bash
-apps/mobile/modules/t3-terminal/scripts/build-libghostty-android.sh
+apps/mobile/modules/fd-code-terminal/scripts/build-libghostty-android.sh
 ```
 
 The script downloads Zig 0.15.2 when needed, checks out the pinned upstream Ghostty revision, and

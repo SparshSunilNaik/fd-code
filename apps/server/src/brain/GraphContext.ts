@@ -14,7 +14,7 @@ export class GraphContext extends Context.Service<
   {
     readonly query: (query: string, sessionGraph: string) => Effect.Effect<BrainGraphResult>;
   }
->()("t3/brain/GraphContext") {}
+>()("fd-code/brain/GraphContext") {}
 
 export const layer = Layer.effect(
   GraphContext,

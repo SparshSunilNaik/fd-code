@@ -39,7 +39,7 @@ export class RepositoryIdentityResolver extends Context.Service<
       options?: { readonly refresh?: boolean },
     ) => Effect.Effect<RepositoryIdentity | null>;
   }
->()("t3/project/RepositoryIdentityResolver") {}
+>()("fd-code/project/RepositoryIdentityResolver") {}
 
 // Local remotes (GitButler's `gb-local` is `.`) name a path on this machine,
 // not a repository, so unrelated repos would share one identity.

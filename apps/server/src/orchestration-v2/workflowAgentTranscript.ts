@@ -41,7 +41,7 @@ export const WorkflowAgentTranscriptReadObserver = Context.Reference<
     readonly endOffset: number;
     readonly lineCount: number;
   }) => Effect.Effect<void>
->("t3/orchestration/WorkflowAgentTranscriptReadObserver", {
+>("fd-code/orchestration/WorkflowAgentTranscriptReadObserver", {
   defaultValue: () => () => Effect.void,
 });
 

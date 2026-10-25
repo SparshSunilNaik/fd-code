@@ -32,7 +32,7 @@ export class DirectEndpoints extends Context.Service<
   {
     readonly resolve: () => Effect.Effect<ReadonlyArray<ServerDirectEndpoint>>;
   }
->()("t3/environment/DirectEndpoints") {}
+>()("fd-code/environment/DirectEndpoints") {}
 
 /**
  * These routes are plain HTTP and carry the client's credential, so a public

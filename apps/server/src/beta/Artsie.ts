@@ -15,7 +15,7 @@ export function makeArtsie(client = createArtsieAgentClient()) {
 
 /** The local ARTsie hub, as reached by agent MCP tools. */
 export class BetaArtsie extends Context.Service<BetaArtsie, ReturnType<typeof makeArtsie>>()(
-  "t3/beta/Artsie/BetaArtsie",
+  "fd-code/beta/Artsie/BetaArtsie",
 ) {
   static readonly layer = Layer.sync(BetaArtsie, () => makeArtsie());
 }

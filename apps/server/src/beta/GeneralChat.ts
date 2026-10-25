@@ -37,7 +37,7 @@ export class GeneralChat extends Context.Service<
       input: GeneralChatSendInput,
     ) => Effect.Effect<GeneralChatSendResult, GeneralChatError>;
   }
->()("t3/beta/GeneralChat") {}
+>()("fd-code/beta/GeneralChat") {}
 
 export const make = Effect.gen(function* () {
   const config = yield* ServerConfig;

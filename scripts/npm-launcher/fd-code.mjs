@@ -146,7 +146,7 @@ async function main() {
   // so forwarding SIGINT too would deliver it twice.
   const ipc = process.send !== undefined;
   const child = spawn(
-    path.join(dir, process.platform === "win32" ? "t3.exe" : "t3"),
+    path.join(dir, process.platform === "win32" ? "fd-code.exe" : "fd-code"),
     process.argv.slice(2),
     {
       stdio: ipc ? ["inherit", "inherit", "inherit", "ipc"] : "inherit",

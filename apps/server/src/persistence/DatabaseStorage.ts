@@ -25,7 +25,7 @@ export class DatabaseStorage extends Context.Service<
     /** Current file accounting, re-published after each maintenance pass. Null until first read. */
     readonly status: Stream.Stream<DatabaseStorageStatus | null>;
   }
->()("t3/persistence/DatabaseStorage") {}
+>()("fd-code/persistence/DatabaseStorage") {}
 
 /**
  * Deletes superseded history every few hours and hands freed pages back to

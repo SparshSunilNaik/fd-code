@@ -163,7 +163,7 @@ describe("Node runtime selection", () => {
       const path = yield* Path.Path;
       const directory = yield* fs.makeTempDirectoryScoped();
       const platform = yield* HostProcess.Platform;
-      const executable = path.join(directory, platform === "win32" ? "t3.exe" : "t3");
+      const executable = path.join(directory, platform === "win32" ? "fd-code.exe" : "fd-code");
       const node = path.join(directory, platform === "win32" ? "node.exe" : "node");
       yield* fs.writeFileString(executable, "standalone executable fixture");
       yield* fs.chmod(executable, 0o755);

@@ -11,9 +11,12 @@ import * as HostProcess from "@fdcode/shared/HostProcess";
  * other composition, such as a test building the orchestration runtime, keeps its
  * Brain beside its own database so it never writes into the live Brain.
  */
-export const BrainDirectory = Context.Reference<string | undefined>("t3/brain/BrainDirectory", {
-  defaultValue: () => undefined,
-});
+export const BrainDirectory = Context.Reference<string | undefined>(
+  "fd-code/brain/BrainDirectory",
+  {
+    defaultValue: () => undefined,
+  },
+);
 
 /** `T3CODE_BRAIN_DIR` points a scratch or staging server at its own Brain. */
 export const layerShared = Layer.effect(

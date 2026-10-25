@@ -49,7 +49,7 @@ export class BrainMemory extends Context.Service<
       switching: boolean;
     }) => Effect.Effect<{ text: string; context: string }, BrainMemoryError>;
   }
->()("t3/brain/BrainMemory") {}
+>()("fd-code/brain/BrainMemory") {}
 
 const encodeJson = Schema.encodeSync(Schema.fromJsonString(Schema.Unknown));
 const attempt = <A>(run: () => A) =>

@@ -24,7 +24,7 @@ export type {
 } from "@fdcode/provider-core/server/textGeneration";
 
 export class TextGeneration extends Context.Service<TextGeneration, ProviderTextGeneration>()(
-  "t3/textGeneration/TextGeneration",
+  "fd-code/textGeneration/TextGeneration",
 ) {}
 
 type TextGenerationOp =

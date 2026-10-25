@@ -262,7 +262,9 @@ export const chooseLayaDestination = Effect.fn("BetaLaya.chooseDestination")(
   })),
 );
 
-export class Laya extends Context.Service<Laya, ReturnType<typeof makeLaya>>()("t3/beta/Laya") {
+export class Laya extends Context.Service<Laya, ReturnType<typeof makeLaya>>()(
+  "fd-code/beta/Laya",
+) {
   static readonly layer = Layer.effect(
     Laya,
     Effect.gen(function* () {

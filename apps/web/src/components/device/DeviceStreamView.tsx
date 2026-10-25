@@ -1,17 +1,17 @@
-import type { DevicePlatform, EnvironmentId } from "@t3tools/contracts";
+import type { DevicePlatform, EnvironmentId } from "@fdcode/contracts";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { cn } from "~/lib/utils";
 import { Button } from "~/components/ui/button";
 import { refreshDeviceHubAccess, renewDeviceHubAccess, useDeviceHubAccess } from "~/state/device";
-import { createCanvasFrameSink } from "@t3tools/client-runtime/device/frame";
-import { resolveDeviceShape } from "@t3tools/client-runtime/device/shape-profile";
+import { createCanvasFrameSink } from "@fdcode/client-runtime/device/frame";
+import { resolveDeviceShape } from "@fdcode/client-runtime/device/shape-profile";
 import { deviceKeyboard, deviceModel } from "./deviceModels";
 import { fitDeviceFrame } from "./deviceFrameLayout";
 import { DeviceDuoViewport } from "./DeviceDuoViewport";
 import { DeviceDuoControls } from "./DeviceDuoControls";
 import { DeviceAndroidFoldControls } from "./DeviceAndroidFoldControls";
-import type { DuoControlState } from "@t3tools/client-runtime/device/duo-control";
+import type { DuoControlState } from "@fdcode/client-runtime/device/duo-control";
 import { DevicePhoneViewport } from "./DevicePhoneViewport";
 import { DeviceLoadingView } from "./DeviceLoadingView";
 import { type DeviceAxElement, fetchDeviceAxTree } from "./deviceHubApi";
@@ -21,7 +21,7 @@ import {
   type DeviceScreenSize,
   type DeviceStreamClient,
   type DeviceStreamStatus,
-} from "@t3tools/client-runtime/device/stream";
+} from "@fdcode/client-runtime/device/stream";
 import { observeResize } from "~/lib/observeResize";
 import { useStableCallback } from "~/hooks/useStableCallback";
 

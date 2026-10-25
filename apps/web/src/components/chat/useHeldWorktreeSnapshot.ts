@@ -1,4 +1,4 @@
-import type { WorktreeSetupSnapshot } from "@t3tools/contracts";
+import type { WorktreeSetupSnapshot } from "@fdcode/contracts";
 import { useState } from "react";
 
 function snapshotKey(snapshot: WorktreeSetupSnapshot | null | undefined): string | null {

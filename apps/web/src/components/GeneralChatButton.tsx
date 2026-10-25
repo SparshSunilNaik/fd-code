@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { MessageCircleIcon, PinIcon } from "lucide-react";
-import { AuthOrchestrationOperateScope } from "@t3tools/contracts";
+import { AuthOrchestrationOperateScope } from "@fdcode/contracts";
 import { readEnvironmentScope, useEnvironmentScope } from "../state/session";
 import { openGeneralChat } from "../rpc/generalChat";
 import { usePrimaryEnvironmentId } from "../state/environments";

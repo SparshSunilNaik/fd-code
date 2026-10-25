@@ -1,6 +1,6 @@
-import { formatAttachmentSize } from "@t3tools/client-runtime/state/attachments";
-import { imageMimeType } from "@t3tools/shared/image";
-import { videoMimeType } from "@t3tools/shared/video";
+import { formatAttachmentSize } from "@fdcode/client-runtime/state/attachments";
+import { imageMimeType } from "@fdcode/shared/image";
+import { videoMimeType } from "@fdcode/shared/video";
 /**
  * These are the sRGB form of the same OKLCH set web uses, so a chip looks the same on every
  * surface. See `composerInlineChip.ts`.

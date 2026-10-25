@@ -1,5 +1,5 @@
 import { expect, it } from "vite-plus/test";
-import { ThreadId, TurnItemId, type OrchestrationV2ContextHandoff } from "@t3tools/contracts";
+import { ThreadId, TurnItemId, type OrchestrationV2ContextHandoff } from "@fdcode/contracts";
 import { retrievableHandoffs } from "./handoffHistory.ts";
 
 it("keeps dialogue but records tool-output omissions for later retrieval without mutating saved history", () => {

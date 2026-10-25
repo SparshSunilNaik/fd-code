@@ -1,4 +1,4 @@
-import type { DesktopCliCommandState } from "@t3tools/contracts";
+import type { DesktopCliCommandState } from "@fdcode/contracts";
 import { useEffect, useState } from "react";
 
 import { Button } from "../ui/button";

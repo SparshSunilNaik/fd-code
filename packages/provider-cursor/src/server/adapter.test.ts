@@ -11,7 +11,7 @@ import {
   RunAttemptId,
   RunId,
   ThreadId,
-} from "@t3tools/contracts";
+} from "@fdcode/contracts";
 import { CursorSettings } from "../settings.ts";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
@@ -22,11 +22,11 @@ import * as Path from "effect/Path";
 import * as Schema from "effect/Schema";
 import * as Stream from "effect/Stream";
 
-import * as TestProviderHost from "@t3tools/provider-testing/TestProviderHost";
-import * as IdAllocator from "@t3tools/provider-core/server/IdAllocator";
-import * as McpProviderSessions from "@t3tools/provider-core/server/McpProviderSessions";
-import * as ProviderAdapter from "@t3tools/provider-core/server/ProviderAdapter";
-import { makeProviderFailure } from "@t3tools/provider-core/server/failure";
+import * as TestProviderHost from "@fdcode/provider-testing/TestProviderHost";
+import * as IdAllocator from "@fdcode/provider-core/server/IdAllocator";
+import * as McpProviderSessions from "@fdcode/provider-core/server/McpProviderSessions";
+import * as ProviderAdapter from "@fdcode/provider-core/server/ProviderAdapter";
+import { makeProviderFailure } from "@fdcode/provider-core/server/failure";
 import {
   cursorMcpServers,
   cursorRuntimeAgentPolicy,

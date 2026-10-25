@@ -1,5 +1,5 @@
-import { SourceControlProviderKind } from "@t3tools/contracts";
-import type { RepositoryIdentity, SourceControlProviderInfo } from "@t3tools/contracts";
+import { SourceControlProviderKind } from "@fdcode/contracts";
+import type { RepositoryIdentity, SourceControlProviderInfo } from "@fdcode/contracts";
 
 export interface ChangeRequestPresentation {
   readonly icon:

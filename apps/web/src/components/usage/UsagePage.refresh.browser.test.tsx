@@ -1,6 +1,6 @@
 import { RegistryContext } from "@effect/atom-react";
-import { EnvironmentId, ProviderInstanceId, USAGE_CONTRACT_VERSION } from "@t3tools/contracts";
-import { mergeUsage } from "@t3tools/shared/usageMerge";
+import { EnvironmentId, ProviderInstanceId, USAGE_CONTRACT_VERSION } from "@fdcode/contracts";
+import { mergeUsage } from "@fdcode/shared/usageMerge";
 import type { Atom } from "effect/reactivity";
 import { act, StrictMode } from "react";
 import { createRoot, type Root } from "react-dom/client";

@@ -21,10 +21,10 @@ import {
   ProjectId,
   type RepositoryIdentity,
   type ThreadPullRequestKey,
-} from "@t3tools/contracts";
-import type { ReviewGuideStackLayer } from "@t3tools/provider-core/server/textGeneration";
-import { resolveProjectSettings } from "@t3tools/shared/projectSettings";
-import { sourceControlRepositorySelector } from "@t3tools/shared/sourceControl";
+} from "@fdcode/contracts";
+import type { ReviewGuideStackLayer } from "@fdcode/provider-core/server/textGeneration";
+import { resolveProjectSettings } from "@fdcode/shared/projectSettings";
+import { sourceControlRepositorySelector } from "@fdcode/shared/sourceControl";
 
 import * as ServerConfig from "../config.ts";
 import * as PullRequestReviewGuides from "../persistence/PullRequestReviewGuides.ts";

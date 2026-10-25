@@ -1,6 +1,6 @@
-import { PASTED_TEXT_ATTACHMENT_THRESHOLD_BYTES } from "@t3tools/client-runtime/text-paste";
-import { PROVIDER_SEND_TURN_MAX_INPUT_CHARS } from "@t3tools/contracts";
-import { collectComposerInlineTokens } from "@t3tools/shared/composerInlineTokens";
+import { PASTED_TEXT_ATTACHMENT_THRESHOLD_BYTES } from "@fdcode/client-runtime/text-paste";
+import { PROVIDER_SEND_TURN_MAX_INPUT_CHARS } from "@fdcode/contracts";
+import { collectComposerInlineTokens } from "@fdcode/shared/composerInlineTokens";
 import { composerContextEditorTokens } from "../lib/composerContext";
 import { requireNativeView } from "expo";
 import {

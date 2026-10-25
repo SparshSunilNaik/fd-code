@@ -2,7 +2,7 @@ import { assert, it } from "@effect/vitest";
 import * as Effect from "effect/Effect";
 import * as Fiber from "effect/Fiber";
 import * as TestClock from "effect/testing/TestClock";
-import * as HostProcess from "@t3tools/shared/HostProcess";
+import * as HostProcess from "@fdcode/shared/HostProcess";
 
 import { awaitLauncherLoss } from "./launcherWatch.ts";
 

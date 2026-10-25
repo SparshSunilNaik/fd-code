@@ -1,4 +1,4 @@
-import type { OrchestrationV2UserMessageInputIntent } from "@t3tools/contracts";
+import type { OrchestrationV2UserMessageInputIntent } from "@fdcode/contracts";
 
 import type { AppSymbolName } from "../../components/ui/AppSymbol";
 

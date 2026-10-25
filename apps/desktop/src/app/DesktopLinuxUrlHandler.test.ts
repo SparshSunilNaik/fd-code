@@ -12,7 +12,7 @@ import * as Sink from "effect/Sink";
 import * as Stream from "effect/Stream";
 import * as TestClock from "effect/testing/TestClock";
 import * as ChildProcessSpawner from "effect/process/ChildProcessSpawner";
-import { caseSensitiveTempDir } from "@t3tools/shared/testing/caseSensitiveFs";
+import { caseSensitiveTempDir } from "@fdcode/shared/testing/caseSensitiveFs";
 
 import * as DesktopEnvironment from "./DesktopEnvironment.ts";
 import * as DesktopAssets from "./DesktopAssets.ts";

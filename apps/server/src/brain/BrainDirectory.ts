@@ -3,7 +3,7 @@ import * as NodePath from "node:path";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
-import * as HostProcess from "@t3tools/shared/HostProcess";
+import * as HostProcess from "@fdcode/shared/HostProcess";
 
 /**
  * Where the shared, cross-app Brain lives. Only the running server opts into

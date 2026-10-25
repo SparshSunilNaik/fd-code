@@ -1,13 +1,13 @@
 import { useAtomValue } from "@effect/atom-react";
 import { StackActions, useNavigation } from "@react-navigation/native";
-import { scopeThreadRef } from "@t3tools/client-runtime/environment";
+import { scopeThreadRef } from "@fdcode/client-runtime/environment";
 import {
   resolveWorkflowOpening,
   workflowOpeningHeadline,
   workflowOpeningParentThreadId,
   type RuntimeSubagent,
-} from "@t3tools/client-runtime/state/subagentRuntime";
-import type { EnvironmentId, ThreadId } from "@t3tools/contracts";
+} from "@fdcode/client-runtime/state/subagentRuntime";
+import type { EnvironmentId, ThreadId } from "@fdcode/contracts";
 import { useState } from "react";
 import { Pressable, View } from "react-native";
 

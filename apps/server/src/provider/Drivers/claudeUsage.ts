@@ -1,16 +1,16 @@
-import type { ClaudeSettings } from "@t3tools/contracts";
+import type { ClaudeSettings } from "@fdcode/contracts";
 import * as Effect from "effect/Effect";
 import * as Path from "effect/Path";
 
-import { expandHomePath } from "@t3tools/provider-core/server/pathExpansion";
+import { expandHomePath } from "@fdcode/provider-core/server/pathExpansion";
 import {
   parseTimestampMs,
   tokenCount,
   type ProviderUsageReader,
   type TranscriptUsageFormat,
   type UsageRecord,
-} from "@t3tools/provider-core/server/usage";
-import * as HostProcess from "@t3tools/shared/HostProcess";
+} from "@fdcode/provider-core/server/usage";
+import * as HostProcess from "@fdcode/shared/HostProcess";
 
 /**
  * FD CODE writes one record per assistant *content block*, and every one of those records repeats

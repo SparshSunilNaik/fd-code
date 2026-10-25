@@ -6,7 +6,7 @@ import {
   type DesktopBridge,
   type DesktopServerExposureState,
   type DesktopWslState,
-} from "@t3tools/contracts";
+} from "@fdcode/contracts";
 
 /**
  * Operating terminals without being able to list them leaves a client

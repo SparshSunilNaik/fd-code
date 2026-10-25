@@ -5,8 +5,8 @@ import {
   buildMenuItems,
   getGitActionDisabledReason,
   requiresDefaultBranchConfirmation,
-} from "@t3tools/client-runtime/state/vcs";
-import { EnvironmentId, ThreadId } from "@t3tools/contracts";
+} from "@fdcode/client-runtime/state/vcs";
+import { EnvironmentId, ThreadId } from "@fdcode/contracts";
 import {
   CommonActions,
   StackActions,

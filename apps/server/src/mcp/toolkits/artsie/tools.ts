@@ -1,4 +1,4 @@
-import { ArtsieAppId, ArtsieWorkspacePath, OrchestratorMcpFailure } from "@t3tools/contracts";
+import { ArtsieAppId, ArtsieWorkspacePath, OrchestratorMcpFailure } from "@fdcode/contracts";
 import * as Schema from "effect/Schema";
 import { Tool, Toolkit } from "effect/ai";
 import * as BetaArtsie from "../../../beta/Artsie.ts";

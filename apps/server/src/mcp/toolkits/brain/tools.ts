@@ -6,7 +6,7 @@ import {
   BetaBrainCallInput,
   BetaBrainResponse,
   OrchestratorMcpFailure,
-} from "@t3tools/contracts";
+} from "@fdcode/contracts";
 import { Tool, Toolkit } from "effect/ai";
 import * as McpInvocationContext from "../../McpInvocationContext.ts";
 import * as BrainMemory from "../../../brain/BrainMemory.ts";

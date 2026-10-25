@@ -1,10 +1,10 @@
 import { useAtomValue } from "@effect/atom-react";
-import { createDeviceEnvironmentAtoms } from "@t3tools/client-runtime/state/device";
+import { createDeviceEnvironmentAtoms } from "@fdcode/client-runtime/state/device";
 import {
   type DeviceHubAccess,
   resolveDeviceHubAccess,
-} from "@t3tools/client-runtime/state/deviceHubAccess";
-import type { DeviceServiceState, EnvironmentId } from "@t3tools/contracts";
+} from "@fdcode/client-runtime/state/deviceHubAccess";
+import type { DeviceServiceState, EnvironmentId } from "@fdcode/contracts";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import { AsyncResult, Atom, AtomRegistry } from "effect/reactivity";

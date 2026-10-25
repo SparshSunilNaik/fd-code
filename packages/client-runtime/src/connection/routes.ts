@@ -3,8 +3,8 @@ import {
   isPrivateNetworkHost,
   isSharedAddressSpaceHost,
   isTailnetHost,
-} from "@t3tools/shared/hostClassification";
-import type { DesktopSshEnvironmentTarget } from "@t3tools/contracts";
+} from "@fdcode/shared/hostClassification";
+import type { DesktopSshEnvironmentTarget } from "@fdcode/contracts";
 import * as Option from "effect/Option";
 
 import {

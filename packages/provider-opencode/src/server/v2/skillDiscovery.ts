@@ -3,7 +3,7 @@ import * as FileSystem from "effect/FileSystem";
 import * as Path from "effect/Path";
 import * as Schema from "effect/Schema";
 import * as NodeURL from "node:url";
-import { T3_CODE_ORCHESTRATION_INSTRUCTIONS } from "@t3tools/provider-core/server/orchestrationInstructions";
+import { T3_CODE_ORCHESTRATION_INSTRUCTIONS } from "@fdcode/provider-core/server/orchestrationInstructions";
 
 import * as OpenCodeRuntime from "../OpenCodeRuntime.ts";
 

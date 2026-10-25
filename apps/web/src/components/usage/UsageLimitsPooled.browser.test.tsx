@@ -3,8 +3,8 @@ import {
   ProviderDriverKind,
   ProviderInstanceId,
   type ServerProvider,
-} from "@t3tools/contracts";
-import type { LimitPresentations } from "@t3tools/shared/usageLimits";
+} from "@fdcode/contracts";
+import type { LimitPresentations } from "@fdcode/shared/usageLimits";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vite-plus/test";

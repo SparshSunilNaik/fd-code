@@ -4,9 +4,9 @@ import {
   type RepositoryIdentity,
   SourceControlProviderKind,
   type ThreadPullRequestKey,
-} from "@t3tools/contracts";
-import { sourceControlRepositorySelector } from "@t3tools/shared/sourceControl";
-import { normalizeThreadPullRequestKey } from "@t3tools/shared/threadPullRequests";
+} from "@fdcode/contracts";
+import { sourceControlRepositorySelector } from "@fdcode/shared/sourceControl";
+import { normalizeThreadPullRequestKey } from "@fdcode/shared/threadPullRequests";
 
 export function pullRequestSyncKey(
   reference: PullRequestRef,

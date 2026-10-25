@@ -8,12 +8,12 @@ import type {
   ScopedProjectRef,
   ServerConfig,
   ServerProvider,
-} from "@t3tools/contracts";
-import { scopeProjectRef, scopeThreadRef } from "@t3tools/client-runtime/environment";
+} from "@fdcode/contracts";
+import { scopeProjectRef, scopeThreadRef } from "@fdcode/client-runtime/environment";
 import {
   isAtomCommandInterrupted,
   squashAtomCommandFailure,
-} from "@t3tools/client-runtime/state/runtime";
+} from "@fdcode/client-runtime/state/runtime";
 import {
   AuthTerminalOperateScope,
   CommandId,
@@ -21,7 +21,7 @@ import {
   AuthOrchestrationOperateScope,
   ProviderDriverKind,
   ThreadId,
-} from "@t3tools/contracts";
+} from "@fdcode/contracts";
 import * as Schema from "effect/Schema";
 import {
   ArrowRightIcon,

@@ -2,8 +2,8 @@ import type {
   OtlpEndpointCheckInput,
   OtlpEndpointCheckResult,
   OtlpSignal,
-} from "@t3tools/contracts";
-import { layerOtlpSerialization } from "@t3tools/shared/observability";
+} from "@fdcode/contracts";
+import { layerOtlpSerialization } from "@fdcode/shared/observability";
 import * as Clock from "effect/Clock";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";

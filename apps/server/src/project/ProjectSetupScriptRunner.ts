@@ -1,11 +1,11 @@
-import { ProjectId, type ProjectScript } from "@t3tools/contracts";
-import * as HostProcess from "@t3tools/shared/HostProcess";
+import { ProjectId, type ProjectScript } from "@fdcode/contracts";
+import * as HostProcess from "@fdcode/shared/HostProcess";
 import {
   projectScriptRuntimeEnv,
   resolveProjectScripts,
   settleProjectScript,
   setupProjectScript,
-} from "@t3tools/shared/projectScripts";
+} from "@fdcode/shared/projectScripts";
 
 import * as Clock from "effect/Clock";
 import * as Context from "effect/Context";

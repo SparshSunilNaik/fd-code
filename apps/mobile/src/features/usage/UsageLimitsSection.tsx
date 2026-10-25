@@ -8,7 +8,7 @@ import {
   type ServerProvider,
   type ServerProviderResetCredits,
   type ServerProviderUsageWindow,
-} from "@t3tools/contracts";
+} from "@fdcode/contracts";
 import {
   elapsedShare,
   formatDuration,
@@ -16,9 +16,9 @@ import {
   limitsNotice,
   paceOf,
   remainingPercent,
-} from "@t3tools/shared/usageLimits";
+} from "@fdcode/shared/usageLimits";
 import { type ReactNode, useEffect, useEffectEvent, useRef, useState } from "react";
-import { refreshUsageLimits } from "@t3tools/client-runtime/state/usage";
+import { refreshUsageLimits } from "@fdcode/client-runtime/state/usage";
 import { Linking, Pressable, View } from "react-native";
 
 import { AppText as Text } from "../../components/ui/AppText";

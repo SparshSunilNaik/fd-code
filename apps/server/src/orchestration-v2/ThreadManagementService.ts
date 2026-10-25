@@ -1,7 +1,7 @@
 import type {
   OrchestrationV2SearchThreadInput,
   OrchestrationV2SearchThreadResult,
-} from "@t3tools/contracts";
+} from "@fdcode/contracts";
 import type {
   ProjectionRecordField,
   ProjectionRecordFilter,
@@ -34,8 +34,8 @@ import {
   type ScheduledTaskId,
   ThreadId,
   type TurnItemId,
-} from "@t3tools/contracts";
-import { threadTranscriptHeader } from "@t3tools/shared/threadTranscript";
+} from "@fdcode/contracts";
+import { threadTranscriptHeader } from "@fdcode/shared/threadTranscript";
 import * as Context from "effect/Context";
 import * as DateTime from "effect/DateTime";
 import * as Duration from "effect/Duration";

@@ -1,4 +1,4 @@
-import type { AssetResource, EnvironmentId } from "@t3tools/contracts";
+import type { AssetResource, EnvironmentId } from "@fdcode/contracts";
 import type { ImageSource } from "expo-image";
 
 /**

@@ -1,6 +1,6 @@
 // @effect-diagnostics globalTimers:off
 // Local HTTP transport owns its AbortSignal; no editor process is started here.
-import type { BetaArtsieInput, BetaBrainResponse } from "@t3tools/contracts";
+import type { BetaArtsieInput, BetaBrainResponse } from "@fdcode/contracts";
 
 const ORIGIN = "http://127.0.0.1:8743";
 const MAX_BYTES = 4 * 1024 * 1024;

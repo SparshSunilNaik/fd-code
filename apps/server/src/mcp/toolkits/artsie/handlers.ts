@@ -1,4 +1,4 @@
-import { OrchestratorMcpFailure } from "@t3tools/contracts";
+import { OrchestratorMcpFailure } from "@fdcode/contracts";
 import * as Effect from "effect/Effect";
 import * as BetaArtsie from "../../../beta/Artsie.ts";
 import * as ArtsieCli from "../../../beta/ArtsieCli.ts";

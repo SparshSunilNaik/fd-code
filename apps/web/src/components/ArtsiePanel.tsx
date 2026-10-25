@@ -9,7 +9,7 @@ import {
   SearchIcon,
   SlidersHorizontalIcon,
 } from "lucide-react";
-import type { BetaArtsieInput } from "@t3tools/contracts";
+import type { BetaArtsieInput } from "@fdcode/contracts";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 import { PrimaryEnvironmentHttpClient } from "../environments/primary/httpClient";

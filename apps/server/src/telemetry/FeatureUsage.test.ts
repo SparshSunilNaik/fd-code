@@ -1,4 +1,4 @@
-import { CommandId, ORCHESTRATION_V2_WS_METHODS, ThreadId, WS_METHODS } from "@t3tools/contracts";
+import { CommandId, ORCHESTRATION_V2_WS_METHODS, ThreadId, WS_METHODS } from "@fdcode/contracts";
 import { expect, it } from "@effect/vitest";
 
 import { featureUsage } from "./FeatureUsage.ts";

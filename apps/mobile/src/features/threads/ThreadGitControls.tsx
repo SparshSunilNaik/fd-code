@@ -10,12 +10,12 @@ import {
   type ProjectScript,
   ThreadId,
   type VcsStatusResult,
-} from "@t3tools/contracts";
+} from "@fdcode/contracts";
 import {
   type GitActionRequestInput,
   requiresDefaultBranchConfirmation,
   resolveQuickAction,
-} from "@t3tools/client-runtime/state/vcs";
+} from "@fdcode/client-runtime/state/vcs";
 import { useNavigation } from "@react-navigation/native";
 
 import { useEnvironmentScope } from "../../state/session";
@@ -26,7 +26,7 @@ import {
   projectScriptMenuIcon,
   type TerminalMenuSession,
 } from "../terminal/terminalMenu";
-import { projectScriptMenuLabel } from "@t3tools/shared/projectScripts";
+import { projectScriptMenuLabel } from "@fdcode/shared/projectScripts";
 
 function truncateMiddle(value: string, maxLength: number): string {
   if (value.length <= maxLength) {

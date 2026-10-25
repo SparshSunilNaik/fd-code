@@ -1,7 +1,7 @@
-import { EnvironmentId, ORCHESTRATION_PROTOCOL_VERSION } from "@t3tools/contracts";
+import { EnvironmentId, ORCHESTRATION_PROTOCOL_VERSION } from "@fdcode/contracts";
 import { describe, expect, it } from "vite-plus/test";
 
-import { orchestrationProtocolCompatibilityError } from "@t3tools/client-runtime/connection";
+import { orchestrationProtocolCompatibilityError } from "@fdcode/client-runtime/connection";
 
 import { environmentStatusText } from "./environmentStatusText";
 

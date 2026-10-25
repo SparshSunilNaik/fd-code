@@ -3,7 +3,7 @@ import { assert, it } from "@effect/vitest";
 import * as Effect from "effect/Effect";
 import * as FileSystem from "effect/FileSystem";
 import * as NodeURL from "node:url";
-import { T3_CODE_ORCHESTRATION_INSTRUCTIONS } from "@t3tools/provider-core/server/orchestrationInstructions";
+import { T3_CODE_ORCHESTRATION_INSTRUCTIONS } from "@fdcode/provider-core/server/orchestrationInstructions";
 import { describe } from "vite-plus/test";
 
 import { prepareSkillDiscovery, skillDiscoveryPlugin } from "./skillDiscovery.ts";

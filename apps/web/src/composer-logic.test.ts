@@ -1,16 +1,16 @@
-import { resolveComposerDispatchMode } from "@t3tools/client-runtime/state/composer-dispatch";
-import { filterComposerPullRequestMatches } from "@t3tools/shared/composerPullRequestMatches";
-import { EnvironmentId, MessageId, ThreadId, type AssistantCitation } from "@t3tools/contracts";
+import { resolveComposerDispatchMode } from "@fdcode/client-runtime/state/composer-dispatch";
+import { filterComposerPullRequestMatches } from "@fdcode/shared/composerPullRequestMatches";
+import { EnvironmentId, MessageId, ThreadId, type AssistantCitation } from "@fdcode/contracts";
 import {
   collectAssistantCitations,
   expandAssistantCitationsForProvider,
   serializeAssistantCitation,
-} from "@t3tools/shared/assistantCitations";
+} from "@fdcode/shared/assistantCitations";
 import {
   DEFAULT_RESOLVED_KEYBINDINGS,
   compileResolvedKeybindingsConfig,
   mergeWithDefaultKeybindings,
-} from "@t3tools/shared/keybindings";
+} from "@fdcode/shared/keybindings";
 import { describe, expect, it } from "vite-plus/test";
 
 import {

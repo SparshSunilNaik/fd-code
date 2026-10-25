@@ -1,5 +1,5 @@
 import { it } from "@effect/vitest";
-import type { AdvertisedEndpoint, DesktopServerExposureState } from "@t3tools/contracts";
+import type { AdvertisedEndpoint, DesktopServerExposureState } from "@fdcode/contracts";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as AsyncResult from "effect/reactivity/AsyncResult";

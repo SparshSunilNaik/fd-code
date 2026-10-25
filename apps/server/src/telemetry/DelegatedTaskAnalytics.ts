@@ -6,7 +6,7 @@
  *
  * @module DelegatedTaskAnalytics
  */
-import type { OrchestrationV2DomainEvent } from "@t3tools/contracts";
+import type { OrchestrationV2DomainEvent } from "@fdcode/contracts";
 import * as DateTime from "effect/DateTime";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";

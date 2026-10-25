@@ -1,19 +1,19 @@
-import { SourceControlProviderKind } from "@t3tools/contracts";
+import { SourceControlProviderKind } from "@fdcode/contracts";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
-import { randomUuidV4 } from "@t3tools/provider-core/server/randomUuid";
+import { randomUuidV4 } from "@fdcode/provider-core/server/randomUuid";
 import {
   NonNegativeInt,
   TrimmedNonEmptyString,
   type PullRequestCapabilities,
   type PullRequestStackHead,
-} from "@t3tools/contracts";
+} from "@fdcode/contracts";
 import {
   PullRequestProviderError,
   type ProviderRepositoryRef,
   type PullRequestProviderApi,
-} from "@t3tools/source-control-core/server/PullRequestProvider";
+} from "@fdcode/source-control-core/server/PullRequestProvider";
 
 import * as GitCafeApi from "./GitCafeApi.ts";
 import * as GitCafeHosts from "./gitCafeHosts.ts";

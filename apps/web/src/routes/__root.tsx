@@ -1,6 +1,6 @@
 import { PermissionUpdateNotice } from "../components/PermissionUpdateNotice";
-import { type ServerLifecycleWelcomePayload } from "@t3tools/contracts";
-import { scopedProjectKey, scopeProjectRef } from "@t3tools/client-runtime/environment";
+import { type ServerLifecycleWelcomePayload } from "@fdcode/contracts";
+import { scopedProjectKey, scopeProjectRef } from "@fdcode/client-runtime/environment";
 import {
   Outlet,
   Link,

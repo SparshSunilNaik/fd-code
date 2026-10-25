@@ -4,9 +4,9 @@ import type {
   RunId,
   ScopedThreadRef,
   ThreadId,
-} from "@t3tools/contracts";
-import { workspacePreparationRetryRunIds } from "@t3tools/client-runtime/state/turn-item-presentation";
-import { scopedThreadKey } from "@t3tools/client-runtime/environment";
+} from "@fdcode/contracts";
+import { workspacePreparationRetryRunIds } from "@fdcode/client-runtime/state/turn-item-presentation";
+import { scopedThreadKey } from "@fdcode/client-runtime/environment";
 import { useState } from "react";
 import { useStableCallback } from "../../hooks/useStableCallback";
 import { useHeldWorktreeSnapshot } from "./useHeldWorktreeSnapshot";

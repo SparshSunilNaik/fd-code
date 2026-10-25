@@ -1,4 +1,4 @@
-import { normalizeSearchQuery, scoreQueryMatch } from "@t3tools/shared/searchRanking";
+import { normalizeSearchQuery, scoreQueryMatch } from "@fdcode/shared/searchRanking";
 
 type ModelPickerSearchableModel = {
   driverKind: string;

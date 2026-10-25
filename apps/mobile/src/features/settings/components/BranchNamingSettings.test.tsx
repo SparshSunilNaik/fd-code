@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import type { BranchNamingMode } from "@t3tools/contracts";
+import type { BranchNamingMode } from "@fdcode/contracts";
 import type { ReactNode } from "react";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";

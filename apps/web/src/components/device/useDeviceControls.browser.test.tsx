@@ -1,5 +1,5 @@
-import { EnvironmentId, type DeviceDetail, type DeviceSummary } from "@t3tools/contracts";
-import type { DeviceHubAccess } from "@t3tools/client-runtime/device/hub-access";
+import { EnvironmentId, type DeviceDetail, type DeviceSummary } from "@fdcode/contracts";
+import type { DeviceHubAccess } from "@fdcode/client-runtime/device/hub-access";
 import * as Cause from "effect/Cause";
 import { act, useEffect } from "react";
 import { createRoot, type Root } from "react-dom/client";

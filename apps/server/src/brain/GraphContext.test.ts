@@ -6,7 +6,7 @@ import { expect } from "vite-plus/test";
 import { it } from "@effect/vitest";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
-import * as HostProcess from "@t3tools/shared/HostProcess";
+import * as HostProcess from "@fdcode/shared/HostProcess";
 import * as GraphContext from "./GraphContext.ts";
 
 it.effect(

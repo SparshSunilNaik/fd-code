@@ -1,19 +1,14 @@
-import type {
-  KeybindingCommand,
-  ProjectId,
-  ProjectScript,
-  EnvironmentId,
-} from "@t3tools/contracts";
-import { AuthSettingsWriteScope, EnvironmentAuthorizationError } from "@t3tools/contracts";
-import type { UnifiedSettings } from "@t3tools/contracts/settings";
+import type { KeybindingCommand, ProjectId, ProjectScript, EnvironmentId } from "@fdcode/contracts";
+import { AuthSettingsWriteScope, EnvironmentAuthorizationError } from "@fdcode/contracts";
+import type { UnifiedSettings } from "@fdcode/contracts/settings";
 import {
   isAtomCommandInterrupted,
   mapAtomCommandResult,
   squashAtomCommandFailure,
   type AtomCommandResult,
-} from "@t3tools/client-runtime/state/runtime";
-import type { EnvironmentProject } from "@t3tools/client-runtime/state/shell";
-import { resolveProjectScripts } from "@t3tools/shared/projectScripts";
+} from "@fdcode/client-runtime/state/runtime";
+import type { EnvironmentProject } from "@fdcode/client-runtime/state/shell";
+import { resolveProjectScripts } from "@fdcode/shared/projectScripts";
 import * as Cause from "effect/Cause";
 import { AsyncResult } from "effect/reactivity";
 import { useStableCallback } from "../../hooks/useStableCallback";

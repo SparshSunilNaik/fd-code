@@ -1,8 +1,8 @@
 // @effect-diagnostics nodeBuiltinImport:off - Effect has no incremental digest.
-import { ProviderDriverKind, type ProviderInstallState } from "@t3tools/contracts";
-import { cliArchiveTarCommand } from "@t3tools/shared/cliRelease";
-import * as HostProcess from "@t3tools/shared/HostProcess";
-import { resolveCommandPath, resolveSpawnCommand } from "@t3tools/shared/shell";
+import { ProviderDriverKind, type ProviderInstallState } from "@fdcode/contracts";
+import { cliArchiveTarCommand } from "@fdcode/shared/cliRelease";
+import * as HostProcess from "@fdcode/shared/HostProcess";
+import { resolveCommandPath, resolveSpawnCommand } from "@fdcode/shared/shell";
 import * as Clock from "effect/Clock";
 import * as Cause from "effect/Cause";
 import * as Context from "effect/Context";

@@ -8,9 +8,9 @@ import {
   type ProjectId,
   type ProviderInteractionMode,
   type RuntimeMode,
-} from "@t3tools/contracts";
-import { deriveThreadTitleSeed } from "@t3tools/client-runtime/operations";
-import { assistantCitationsToPlainText } from "@t3tools/shared/assistantCitations";
+} from "@fdcode/contracts";
+import { deriveThreadTitleSeed } from "@fdcode/client-runtime/operations";
+import { assistantCitationsToPlainText } from "@fdcode/shared/assistantCitations";
 
 import type { UploadedMobileAttachment } from "./attachmentUpload";
 

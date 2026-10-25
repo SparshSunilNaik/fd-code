@@ -1,6 +1,6 @@
-import { scopeProjectRef, scopeThreadRef } from "@t3tools/client-runtime/environment";
-import type { EnvironmentId, ThreadId } from "@t3tools/contracts";
-import { formatThreadLink, percentDecodedThreadLinkId } from "@t3tools/shared/threadLinks";
+import { scopeProjectRef, scopeThreadRef } from "@fdcode/client-runtime/environment";
+import type { EnvironmentId, ThreadId } from "@fdcode/contracts";
+import { formatThreadLink, percentDecodedThreadLinkId } from "@fdcode/shared/threadLinks";
 import { Link } from "@tanstack/react-router";
 import { MessageSquareTextIcon } from "lucide-react";
 

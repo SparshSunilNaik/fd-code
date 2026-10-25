@@ -1,10 +1,10 @@
-import { CommandId, type OrchestrationV2ThreadProjection } from "@t3tools/contracts";
+import { CommandId, type OrchestrationV2ThreadProjection } from "@fdcode/contracts";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Ref from "effect/Ref";
 
-import * as IdAllocator from "@t3tools/provider-core/server/IdAllocator";
-import * as ProviderContinuationRequests from "@t3tools/provider-core/server/ProviderContinuationRequests";
+import * as IdAllocator from "@fdcode/provider-core/server/IdAllocator";
+import * as ProviderContinuationRequests from "@fdcode/provider-core/server/ProviderContinuationRequests";
 import * as ThreadManagementService from "./ThreadManagementService.ts";
 import { isUndeliveredMailboxSteer } from "./NotificationMailbox.ts";
 

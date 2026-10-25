@@ -1,14 +1,14 @@
 import { useEffect, useRef, type RefObject } from "react";
-import type { DuoViewer } from "@t3tools/client-runtime/device/duo-viewer";
-import type { DeviceModelSource } from "@t3tools/client-runtime/device/model";
-import { createPhoneInteraction } from "@t3tools/client-runtime/device/phone-interaction";
-import { createCanvasFrameSink } from "@t3tools/client-runtime/device/frame";
-import type { DeviceScreenSize, DeviceStreamClient } from "@t3tools/client-runtime/device/stream";
-import { createDuoPinch } from "@t3tools/client-runtime/device/duo-control";
+import type { DuoViewer } from "@fdcode/client-runtime/device/duo-viewer";
+import type { DeviceModelSource } from "@fdcode/client-runtime/device/model";
+import { createPhoneInteraction } from "@fdcode/client-runtime/device/phone-interaction";
+import { createCanvasFrameSink } from "@fdcode/client-runtime/device/frame";
+import type { DeviceScreenSize, DeviceStreamClient } from "@fdcode/client-runtime/device/stream";
+import { createDuoPinch } from "@fdcode/client-runtime/device/duo-control";
 import { bindPhoneTrackpad } from "./phoneTrackpad";
 import { observeResize } from "../../lib/observeResize";
 
-const loadDuoViewer = () => import("@t3tools/client-runtime/device/duo-viewer");
+const loadDuoViewer = () => import("@fdcode/client-runtime/device/duo-viewer");
 
 export function DeviceDuoViewport(props: {
   readonly model: DeviceModelSource;

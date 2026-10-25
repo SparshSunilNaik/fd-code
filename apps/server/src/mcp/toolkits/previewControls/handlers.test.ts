@@ -9,8 +9,8 @@ import {
   ProviderInstanceId,
   SERVER_BROWSER_AUTOMATION_CLIENT_ID,
   ThreadId,
-} from "@t3tools/contracts";
-import { resolveProjectSettings } from "@t3tools/shared/projectSettings";
+} from "@fdcode/contracts";
+import { resolveProjectSettings } from "@fdcode/shared/projectSettings";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Stream from "effect/Stream";

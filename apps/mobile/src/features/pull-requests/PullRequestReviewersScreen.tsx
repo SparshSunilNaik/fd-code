@@ -4,8 +4,8 @@ import { AppActivityIndicator } from "../../components/ui/AppActivityIndicator";
 import { usePullRequestConnected } from "./usePullRequestConnected";
 import { useAtomValue } from "@effect/atom-react";
 import { useNavigation, type StaticScreenProps } from "@react-navigation/native";
-import { squashAtomCommandFailure } from "@t3tools/client-runtime/state/runtime";
-import type { PullRequestReviewerCandidate } from "@t3tools/contracts";
+import { squashAtomCommandFailure } from "@fdcode/client-runtime/state/runtime";
+import type { PullRequestReviewerCandidate } from "@fdcode/contracts";
 import { useEffect, useRef, useState } from "react";
 import {
   FlatList,

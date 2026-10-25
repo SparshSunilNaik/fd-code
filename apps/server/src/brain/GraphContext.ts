@@ -2,11 +2,11 @@
 import * as NodeChildProcess from "node:child_process";
 import * as NodeFS from "node:fs";
 import * as NodePath from "node:path";
-import { type BrainGraphResult } from "@t3tools/contracts";
+import { type BrainGraphResult } from "@fdcode/contracts";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
-import * as HostProcess from "@t3tools/shared/HostProcess";
+import * as HostProcess from "@fdcode/shared/HostProcess";
 import * as BrainDirectory from "./BrainDirectory.ts";
 
 export class GraphContext extends Context.Service<

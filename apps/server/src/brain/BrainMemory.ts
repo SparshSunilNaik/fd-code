@@ -10,7 +10,7 @@ import {
   type BrainRagResult,
   type OrchestrationV2StoredEvent,
   type ThreadId,
-} from "@t3tools/contracts";
+} from "@fdcode/contracts";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";

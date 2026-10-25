@@ -1,12 +1,12 @@
-import { fileBasename } from "@t3tools/shared/path";
-import { formatFilePathPosition } from "@t3tools/shared/fileLinks";
+import { fileBasename } from "@fdcode/shared/path";
+import { formatFilePathPosition } from "@fdcode/shared/fileLinks";
 import {
   inlineCodeFilePathCandidate,
   normalizeMarkdownLinkDestination,
   parseMarkdownFileLink,
-} from "@t3tools/shared/markdownLinks";
-import { parseThreadLinkHref } from "@t3tools/shared/threadLinks";
-import { videoMimeType } from "@t3tools/shared/video";
+} from "@fdcode/shared/markdownLinks";
+import { parseThreadLinkHref } from "@fdcode/shared/threadLinks";
+import { videoMimeType } from "@fdcode/shared/video";
 
 import type { MARKDOWN_FILE_ICON_SOURCES } from "./markdownFileIcons.generated";
 

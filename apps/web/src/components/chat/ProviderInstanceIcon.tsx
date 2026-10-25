@@ -1,8 +1,8 @@
 import { type CSSProperties, memo } from "react";
 
-import { providerInstanceInitials } from "@t3tools/client-runtime/state/provider-instance-display";
+import { providerInstanceInitials } from "@fdcode/client-runtime/state/provider-instance-display";
 
-import { ProviderDriverKind, ProviderInstanceId } from "@t3tools/contracts";
+import { ProviderDriverKind, ProviderInstanceId } from "@fdcode/contracts";
 import { AntigravityIcon, ClaudeAI, HuggingFaceIcon, Icon, OpenAI } from "../Icons";
 
 import { cn } from "~/lib/utils";
@@ -76,7 +76,9 @@ export const ProviderInstanceIcon = memo(function ProviderInstanceIcon(props: {
 }) {
   const Icon = PROVIDER_ICON_BY_PROVIDER[props.driverKind] ?? null;
   const InstanceIcon =
-    props.instanceId !== undefined ? (PROVIDER_ICON_BY_INSTANCE_ID[props.instanceId] ?? null) : null;
+    props.instanceId !== undefined
+      ? (PROVIDER_ICON_BY_INSTANCE_ID[props.instanceId] ?? null)
+      : null;
   const packageIcon = providerClients.get(props.driverKind)?.icon;
   const indicatorBackground = props.indicatorBackground ?? "var(--card)";
   const accentStyle = props.accentColor

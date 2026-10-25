@@ -1,4 +1,4 @@
-import type { GeneralChatSendInput } from "@t3tools/contracts";
+import type { GeneralChatSendInput } from "@fdcode/contracts";
 import * as Effect from "effect/Effect";
 import { PrimaryEnvironmentHttpClient } from "../environments/primary/httpClient";
 import { runPrimaryHttp } from "../lib/runtime";

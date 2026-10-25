@@ -6,7 +6,7 @@ import {
   ProviderInstanceId,
   type RuntimeMode,
   ThreadId,
-} from "@t3tools/contracts";
+} from "@fdcode/contracts";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import { McpSchema, McpServer } from "effect/ai";

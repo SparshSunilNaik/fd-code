@@ -1,10 +1,10 @@
-import type { ClientSettings } from "@t3tools/contracts/settings";
-import type { AssistantCitation, ResolvedKeybindingsConfig } from "@t3tools/contracts";
+import type { ClientSettings } from "@fdcode/contracts/settings";
+import type { AssistantCitation, ResolvedKeybindingsConfig } from "@fdcode/contracts";
 import {
   serializeAssistantCitation,
   withAssistantCitationComment,
-} from "@t3tools/shared/assistantCitations";
-import { isPathWord } from "@t3tools/shared/composerTrigger";
+} from "@fdcode/shared/assistantCitations";
+import { isPathWord } from "@fdcode/shared/composerTrigger";
 import {
   splitPromptIntoComposerSegments,
   type ComposerPromptSegment,

@@ -1,5 +1,5 @@
-import { ProviderDriverKind } from "@t3tools/contracts";
-import { defineProviderClient } from "@t3tools/provider-core/client";
+import { ProviderDriverKind } from "@fdcode/contracts";
+import { defineProviderClient } from "@fdcode/provider-core/client";
 
 import { GrokSettings } from "./settings.ts";
 

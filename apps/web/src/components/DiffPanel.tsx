@@ -4,9 +4,9 @@ import type { FileDiffContentsLoader, FileDiffMetadata } from "@pierre/diffs";
 import {
   isAtomCommandInterrupted,
   squashAtomCommandFailure,
-} from "@t3tools/client-runtime/state/runtime";
-import { safeErrorLogAttributes } from "@t3tools/client-runtime/errors";
-import type { ScopedThreadRef, RunId } from "@t3tools/contracts";
+} from "@fdcode/client-runtime/state/runtime";
+import { safeErrorLogAttributes } from "@fdcode/client-runtime/errors";
+import type { ScopedThreadRef, RunId } from "@fdcode/contracts";
 import {
   ArrowRightIcon,
   CheckIcon,

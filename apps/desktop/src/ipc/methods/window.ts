@@ -12,10 +12,10 @@ import {
   SystemSettingsPaneSchema,
   type DesktopEnvironmentBootstrap,
   type PickedThemeFile,
-} from "@t3tools/contracts";
-import { PROJECT_FAVICON_EXTENSIONS } from "@t3tools/shared/projectFavicon";
-import { resolveEditorCommand } from "@t3tools/shared/editor";
-import * as HostProcess from "@t3tools/shared/HostProcess";
+} from "@fdcode/contracts";
+import { PROJECT_FAVICON_EXTENSIONS } from "@fdcode/shared/projectFavicon";
+import { resolveEditorCommand } from "@fdcode/shared/editor";
+import * as HostProcess from "@fdcode/shared/HostProcess";
 import * as FileSystem from "effect/FileSystem";
 import * as Path from "effect/Path";
 import * as Effect from "effect/Effect";

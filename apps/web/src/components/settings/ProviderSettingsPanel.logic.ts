@@ -1,4 +1,4 @@
-import type { EnvironmentConnectionPhase } from "@t3tools/client-runtime/connection";
+import type { EnvironmentConnectionPhase } from "@fdcode/client-runtime/connection";
 import {
   AuthProvidersManageScope,
   type AuthSessionState,
@@ -9,7 +9,7 @@ import {
   sessionGrantsScope,
   type ServerSettings,
   type SessionGrantInput,
-} from "@t3tools/contracts";
+} from "@fdcode/contracts";
 
 export interface ProviderEnvironmentOptionLike {
   readonly environmentId: EnvironmentId;

@@ -13,7 +13,7 @@ import {
   ANTIGRAVITY_DEFAULT_MODEL,
   ProviderDriverKind,
   type ServerProvider,
-} from "@t3tools/contracts";
+} from "@fdcode/contracts";
 import { deriveProviderInstanceEntries, NO_PROVIDER_MODEL_SELECTION } from "../providerInstances";
 import { selectThreadDiffPanelSelection, useDiffPanelStore } from "../diffPanelStore";
 import {
@@ -36,8 +36,8 @@ import {
   TurnItemId,
   type OrchestrationV2ProjectedTurnItem,
   type WorktreeSetupSnapshot,
-} from "@t3tools/contracts";
-import type { CodexArtifactTemplate } from "@t3tools/shared/codexArtifactTemplates";
+} from "@fdcode/contracts";
+import type { CodexArtifactTemplate } from "@fdcode/shared/codexArtifactTemplates";
 import * as DateTime from "effect/DateTime";
 import * as Option from "effect/Option";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";

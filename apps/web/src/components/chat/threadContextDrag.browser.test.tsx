@@ -1,7 +1,7 @@
 import { act, memo, useRef } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
-import type { EnvironmentId, ScopedThreadRef, ThreadId } from "@t3tools/contracts";
+import type { EnvironmentId, ScopedThreadRef, ThreadId } from "@fdcode/contracts";
 
 import { THREAD_CONTEXT_DROP_EVENT, useThreadContextDrop } from "./threadContextDrag";
 

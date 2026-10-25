@@ -1,11 +1,11 @@
-import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/shell";
+import type { EnvironmentThreadShell } from "@fdcode/client-runtime/state/shell";
 import {
   generateSpreadPinOrderKeys,
   pinOrderKeyBetween,
   planPinnedReorder,
-} from "@t3tools/client-runtime/state/thread-sort";
-import { effectiveSnoozed } from "@t3tools/client-runtime/state/thread-settled";
-import type { EnvironmentId } from "@t3tools/contracts";
+} from "@fdcode/client-runtime/state/thread-sort";
+import { effectiveSnoozed } from "@fdcode/client-runtime/state/thread-settled";
+import type { EnvironmentId } from "@fdcode/contracts";
 
 export type ThreadMoveDestination =
   | "up"

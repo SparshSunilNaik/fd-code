@@ -1,13 +1,13 @@
-import { backgroundWorkHoldsCompletion } from "@t3tools/shared/orchestrationV2PendingBackgroundWork";
-import { resolveProjectSettings } from "@t3tools/shared/projectSettings";
-import { visibleThreadPullRequests } from "@t3tools/shared/threadPullRequests";
+import { backgroundWorkHoldsCompletion } from "@fdcode/shared/orchestrationV2PendingBackgroundWork";
+import { resolveProjectSettings } from "@fdcode/shared/projectSettings";
+import { visibleThreadPullRequests } from "@fdcode/shared/threadPullRequests";
 import {
   CommandId,
   type ThreadId,
   type OrchestrationV2DomainEvent,
   type OrchestrationV2ThreadShell,
-} from "@t3tools/contracts";
-import { makeDrainableWorker } from "@t3tools/shared/DrainableWorker";
+} from "@fdcode/contracts";
+import { makeDrainableWorker } from "@fdcode/shared/DrainableWorker";
 import * as Cause from "effect/Cause";
 import * as Context from "effect/Context";
 import * as Crypto from "effect/Crypto";
@@ -262,7 +262,7 @@ export class ThreadSettlementServiceV2 extends Context.Service<
   }
 >()("t3/orchestration-v2/ThreadSettlementService/ThreadSettlementServiceV2") {}
 
-function autoSettlementConfigured(settings: import("@t3tools/contracts").ServerSettings): boolean {
+function autoSettlementConfigured(settings: import("@fdcode/contracts").ServerSettings): boolean {
   if (settings.sidebarAutoSettleOnMerge || settings.sidebarAutoSettleAfterDays !== null) {
     return true;
   }
@@ -275,7 +275,7 @@ function autoSettlementConfigured(settings: import("@t3tools/contracts").ServerS
 
 /** @internal Exported for tests. */
 export function autoSettlementSettingsKey(
-  settings: import("@t3tools/contracts").ServerSettings,
+  settings: import("@fdcode/contracts").ServerSettings,
 ): string {
   return JSON.stringify([
     settings.sidebarAutoSettleOnMerge,

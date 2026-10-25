@@ -1,4 +1,4 @@
-import type { OrchestrationV2ContextHandoff } from "@t3tools/contracts";
+import type { OrchestrationV2ContextHandoff } from "@fdcode/contracts";
 
 // Tool transcripts remain pageable in Brain. Native injection carries conversation,
 // plans and file references rather than filling the new model with process output.

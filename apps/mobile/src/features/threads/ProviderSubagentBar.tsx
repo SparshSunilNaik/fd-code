@@ -1,8 +1,8 @@
 import {
   formatProviderSubagentStatus,
   type ProviderSubagentStatus,
-} from "@t3tools/client-runtime/state/thread-execution";
-import { isOrchestrationV2WorkActive } from "@t3tools/contracts";
+} from "@fdcode/client-runtime/state/thread-execution";
+import { isOrchestrationV2WorkActive } from "@fdcode/contracts";
 import { View } from "react-native";
 
 import { AppText as Text } from "../../components/ui/AppText";

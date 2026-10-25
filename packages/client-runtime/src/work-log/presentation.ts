@@ -7,25 +7,25 @@ import {
   type ToolActivityIcon,
   type OrchestrationV2TurnItem,
   type ThreadId,
-} from "@t3tools/contracts";
+} from "@fdcode/contracts";
 import {
   resolveT3McpToolDefinition,
   type T3McpToolDefinition,
   type T3McpToolSummaryAction,
-} from "@t3tools/shared/t3McpToolPresentation";
-import { classifyMarkdownImageSource } from "@t3tools/client-runtime/markdown-images";
-import { resolveMediaSource } from "@t3tools/client-runtime/media-source";
-import { parseChangeRequestUrl } from "@t3tools/shared/changeRequestUrl";
-import { isWorkspaceImagePreviewPath } from "@t3tools/shared/filePreview";
-import { formatTokens } from "@t3tools/shared/usageFormat";
-import { classifyToolActivity } from "@t3tools/shared/toolActivity";
-import { toolOutputIndicatesFailure } from "@t3tools/shared/toolOutput";
+} from "@fdcode/shared/t3McpToolPresentation";
+import { classifyMarkdownImageSource } from "@fdcode/client-runtime/markdown-images";
+import { resolveMediaSource } from "@fdcode/client-runtime/media-source";
+import { parseChangeRequestUrl } from "@fdcode/shared/changeRequestUrl";
+import { isWorkspaceImagePreviewPath } from "@fdcode/shared/filePreview";
+import { formatTokens } from "@fdcode/shared/usageFormat";
+import { classifyToolActivity } from "@fdcode/shared/toolActivity";
+import { toolOutputIndicatesFailure } from "@fdcode/shared/toolOutput";
 
 import {
   summarizeT3ToolCalls,
   t3ToolResultIndicatesFailure,
   type T3ToolSummaryCall,
-} from "@t3tools/client-runtime/t3ToolSummary";
+} from "@fdcode/client-runtime/t3ToolSummary";
 
 export type WorkLogToolLifecycleStatus = RuntimeItemStatus | "stopped" | "idle";
 
@@ -75,7 +75,7 @@ export function contextCompactionLabel(item: CompactionLabelItem): string {
 }
 
 export interface WorkLogPresentationEntry {
-  readonly questionAnswer?: import("@t3tools/contracts").UserInputAttachmentAnswerPayload;
+  readonly questionAnswer?: import("@fdcode/contracts").UserInputAttachmentAnswerPayload;
   readonly id: string;
   readonly createdAt: string;
   readonly label: string;

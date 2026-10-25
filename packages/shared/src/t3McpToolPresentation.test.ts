@@ -14,7 +14,7 @@ describe("resolveT3McpToolPresentation", () => {
         "t3_code/",
         "t3code:",
         "mcp_t3-code_",
-        "T3 Code ",
+        "FD CODE ",
         "FD CODE ",
         "t3-code · ",
       ]) {
@@ -81,7 +81,7 @@ describe("resolveT3McpToolPresentation", () => {
       "t3_code:delegate_task",
       "t3code/delegate_task",
       "t3-code delegate_task",
-      "T3 Code delegate_task",
+      "FD CODE delegate_task",
       "FD CODE delegate_task",
       "t3-code__delegate_task",
     ]) {

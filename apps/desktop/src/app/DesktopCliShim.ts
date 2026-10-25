@@ -12,7 +12,7 @@ const { logInfo, logWarning } = makeComponentLogger("desktop-cli-shim");
 
 export const MARKER = "Written by FD CODE: runs the desktop app's bundled t3 CLI.";
 // Launchers written before the rename carry this marker and are still ours to update.
-const LEGACY_MARKER = "Written by T3 Code: runs the desktop app's bundled t3 CLI.";
+const LEGACY_MARKER = "Written by FD CODE: runs the desktop app's bundled t3 CLI.";
 
 export const isAppWrittenShim = (content: string) =>
   content.includes(MARKER) || content.includes(LEGACY_MARKER);

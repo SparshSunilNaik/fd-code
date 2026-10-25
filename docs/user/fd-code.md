@@ -1,6 +1,6 @@
 # FD CODE
 
-FD CODE is Faheem's customised T3 Code app, based on the newer Alpha codebase. It includes Brain continuity, ARTsie tools, a persistent General chat, and local Laya routing.
+FD CODE is Faheem's customised FD CODE app, based on the newer Alpha codebase. It includes Brain continuity, ARTsie tools, a persistent General chat, and local Laya routing.
 
 ## Install on macOS
 

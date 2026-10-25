@@ -32,9 +32,11 @@ it("seed prompt names the context file and embeds the playbook", () => {
 it("launch prompt stays a single argv-safe line naming the prompt file", () => {
   // The launch argument goes through cmd.exe on Windows (.cmd shims), which
   // cannot carry newlines; the playbook itself must stay on disk.
-  const launch = buildTriageLaunchPrompt(String.raw`C:\Users\a b\.t3\userdata\triage\x\prompt.md`);
+  const launch = buildTriageLaunchPrompt(
+    String.raw`C:\Users\a b\.fd-code\userdata\triage\x\prompt.md`,
+  );
   assert.notInclude(launch, "\n");
-  assert.include(launch, String.raw`C:\Users\a b\.t3\userdata\triage\x\prompt.md`);
+  assert.include(launch, String.raw`C:\Users\a b\.fd-code\userdata\triage\x\prompt.md`);
   assert.isBelow(launch.length, 1_000);
 });
 
@@ -47,27 +49,27 @@ it("context file carries every path the playbook depends on", () => {
     launchedAs: "npx fd-code triage",
     server: "running (pid 42, http://127.0.0.1:4501)",
     paths: {
-      stateDir: "/home/u/.t3/userdata",
-      dbPath: "/home/u/.t3/userdata/state.sqlite",
-      settingsPath: "/home/u/.t3/userdata/settings.json",
-      logsDir: "/home/u/.t3/userdata/logs",
-      serviceLogPath: "/home/u/.t3/userdata/logs/boot-service.log",
-      desktopBackendLogGlob: "/home/u/.t3/userdata/logs/server-child*.log*",
-      serverTracePath: "/home/u/.t3/userdata/logs/server.trace.ndjson",
-      providerEventLogPath: "/home/u/.t3/userdata/logs/provider/events.log",
-      terminalLogsDir: "/home/u/.t3/userdata/logs/terminals",
-      providerStatusCacheDir: "/home/u/.t3/caches",
-      secretsDir: "/home/u/.t3/userdata/secrets",
-      sourceCacheDir: "/home/u/.t3/source",
+      stateDir: "/home/u/.fd-code/userdata",
+      dbPath: "/home/u/.fd-code/userdata/state.sqlite",
+      settingsPath: "/home/u/.fd-code/userdata/settings.json",
+      logsDir: "/home/u/.fd-code/userdata/logs",
+      serviceLogPath: "/home/u/.fd-code/userdata/logs/boot-service.log",
+      desktopBackendLogGlob: "/home/u/.fd-code/userdata/logs/server-child*.log*",
+      serverTracePath: "/home/u/.fd-code/userdata/logs/server.trace.ndjson",
+      providerEventLogPath: "/home/u/.fd-code/userdata/logs/provider/events.log",
+      terminalLogsDir: "/home/u/.fd-code/userdata/logs/terminals",
+      providerStatusCacheDir: "/home/u/.fd-code/caches",
+      secretsDir: "/home/u/.fd-code/userdata/secrets",
+      sourceCacheDir: "/home/u/.fd-code/source",
     },
   });
-  assert.include(context, "/home/u/.t3/userdata/state.sqlite");
-  assert.include(context, "/home/u/.t3/userdata/logs/server.trace.ndjson");
-  assert.include(context, "/home/u/.t3/userdata/logs/boot-service.log");
-  assert.include(context, "/home/u/.t3/userdata/logs/server-child*.log*");
-  assert.include(context, "/home/u/.t3/userdata/logs/provider/events.log");
-  assert.include(context, "/home/u/.t3/userdata/secrets");
-  assert.include(context, "/home/u/.t3/source");
+  assert.include(context, "/home/u/.fd-code/userdata/state.sqlite");
+  assert.include(context, "/home/u/.fd-code/userdata/logs/server.trace.ndjson");
+  assert.include(context, "/home/u/.fd-code/userdata/logs/boot-service.log");
+  assert.include(context, "/home/u/.fd-code/userdata/logs/server-child*.log*");
+  assert.include(context, "/home/u/.fd-code/userdata/logs/provider/events.log");
+  assert.include(context, "/home/u/.fd-code/userdata/secrets");
+  assert.include(context, "/home/u/.fd-code/source");
   assert.include(context, "npx fd-code triage");
 });
 
@@ -82,18 +84,18 @@ it("context file labels the CLI version as the CLI's, not the user's build", () 
     launchedAs: "npx fd-code triage",
     server: "running (pid 42, http://127.0.0.1:3773, version 0.0.43-nightly.20260923.2173)",
     paths: {
-      stateDir: "/home/u/.t3/userdata",
-      dbPath: "/home/u/.t3/userdata/state.sqlite",
-      settingsPath: "/home/u/.t3/userdata/settings.json",
-      logsDir: "/home/u/.t3/userdata/logs",
-      serviceLogPath: "/home/u/.t3/userdata/logs/boot-service.log",
-      desktopBackendLogGlob: "/home/u/.t3/userdata/logs/server-child*.log*",
-      serverTracePath: "/home/u/.t3/userdata/logs/server.trace.ndjson",
-      providerEventLogPath: "/home/u/.t3/userdata/logs/provider/events.log",
-      terminalLogsDir: "/home/u/.t3/userdata/logs/terminals",
-      providerStatusCacheDir: "/home/u/.t3/caches",
-      secretsDir: "/home/u/.t3/userdata/secrets",
-      sourceCacheDir: "/home/u/.t3/source",
+      stateDir: "/home/u/.fd-code/userdata",
+      dbPath: "/home/u/.fd-code/userdata/state.sqlite",
+      settingsPath: "/home/u/.fd-code/userdata/settings.json",
+      logsDir: "/home/u/.fd-code/userdata/logs",
+      serviceLogPath: "/home/u/.fd-code/userdata/logs/boot-service.log",
+      desktopBackendLogGlob: "/home/u/.fd-code/userdata/logs/server-child*.log*",
+      serverTracePath: "/home/u/.fd-code/userdata/logs/server.trace.ndjson",
+      providerEventLogPath: "/home/u/.fd-code/userdata/logs/provider/events.log",
+      terminalLogsDir: "/home/u/.fd-code/userdata/logs/terminals",
+      providerStatusCacheDir: "/home/u/.fd-code/caches",
+      secretsDir: "/home/u/.fd-code/userdata/secrets",
+      sourceCacheDir: "/home/u/.fd-code/source",
     },
   });
   assert.notInclude(context, "Installed version");

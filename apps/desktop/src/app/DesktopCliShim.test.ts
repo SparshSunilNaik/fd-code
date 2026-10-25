@@ -140,8 +140,8 @@ describe("renderCliShim", () => {
     const executable = "C:\\Apps\\R&whoami&X 100%\\!CHANNEL!\\FD CODE.exe";
     const script = renderCliShim({
       target: { kind: "windows", executable, entry: "C:\\Apps\\server.asar\\bin.mjs" },
-      shimPath: "C:\\Users\\José\\.t3\\bin\\t3.cmd",
-      t3Home: "C:\\Users\\José\\.t3",
+      shimPath: "C:\\Users\\José\\.fd-code\\bin\\t3.cmd",
+      t3Home: "C:\\Users\\José\\.fd-code",
     });
     const lines = script.split("\r\n");
     expect(lines).toContain("setlocal EnableExtensions DisableDelayedExpansion");
@@ -153,14 +153,14 @@ describe("renderCliShim", () => {
       (line) => line.includes("whoami") && !/"[^"]*whoami[^"]*"/.test(line),
     );
     expect(bare).toEqual([]);
-    expect(lines).toContain('set "T3CODE_CLI_PATH=C:\\Users\\José\\.t3\\bin\\t3.cmd"');
+    expect(lines).toContain('set "T3CODE_CLI_PATH=C:\\Users\\José\\.fd-code\\bin\\t3.cmd"');
   });
 
   it("switches the Windows console to UTF-8 only when a path needs it", () => {
     const ascii = renderCliShim({
       target: { kind: "windows", executable: "C:\\T3\\FD CODE.exe", entry: "C:\\T3\\bin.mjs" },
-      shimPath: "C:\\Users\\me\\.t3\\bin\\t3.cmd",
-      t3Home: "C:\\Users\\me\\.t3",
+      shimPath: "C:\\Users\\me\\.fd-code\\bin\\t3.cmd",
+      t3Home: "C:\\Users\\me\\.fd-code",
     });
     expect(ascii).not.toContain("chcp");
     expect(ascii.split("\r\n")).toContain("exit /b %t3_exit%");

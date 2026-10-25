@@ -44,7 +44,7 @@ it("treats stable installs as direct invocations", () => {
   for (const entryPath of [
     "/usr/local/lib/node_modules/fd-code/dist/bin.mjs",
     "/home/theo/Code/work/t3code/apps/server/dist/bin.mjs",
-    "/home/theo/.t3/runtime/0.0.31/node_modules/fd-code/dist/bin.mjs",
+    "/home/theo/.fd-code/runtime/0.0.31/node_modules/fd-code/dist/bin.mjs",
     "",
   ]) {
     assert.equal(
@@ -188,7 +188,7 @@ it.layer(NodeServices.layer)("host CLI commands", (it) => {
       const shim = path.join(home, "t3.cmd");
       yield* fs.writeFileString(shim, "@echo off\r\n");
       const hostCommand = (platform: NodeJS.Platform, env: Record<string, string>) =>
-        resolveHostCliCommand("doctor", ["--base-dir", "C:\\Users\\Jane Doe\\.t3"]).pipe(
+        resolveHostCliCommand("doctor", ["--base-dir", "C:\\Users\\Jane Doe\\.fd-code"]).pipe(
           Effect.provideService(HostProcess.ExecutablePath, "C:\\Program Files\\FD CODE\\t3.exe"),
           Effect.provideService(HostProcess.Arguments, [
             "C:\\Program Files\\FD CODE\\t3.exe",
@@ -201,11 +201,11 @@ it.layer(NodeServices.layer)("host CLI commands", (it) => {
       // The desktop shim is called through `&`, and each argument is quoted
       // the PowerShell way: no POSIX single quotes anywhere.
       expect((yield* hostCommand("win32", { T3CODE_CLI_PATH: shim })).command).toBe(
-        `& "${shim}" doctor "--base-dir" "C:\\Users\\Jane Doe\\.t3"`,
+        `& "${shim}" doctor "--base-dir" "C:\\Users\\Jane Doe\\.fd-code"`,
       );
       // Without a launcher, plain `fd-code` with PowerShell-quoted arguments.
       expect((yield* hostCommand("win32", {})).command).toBe(
-        'fd-code doctor "--base-dir" "C:\\Users\\Jane Doe\\.t3"',
+        'fd-code doctor "--base-dir" "C:\\Users\\Jane Doe\\.fd-code"',
       );
       // Typographic quotes also delimit PowerShell strings; doubling keeps them.
       expect(
@@ -220,7 +220,7 @@ it.layer(NodeServices.layer)("host CLI commands", (it) => {
       // POSIX hosts keep single quotes for the same input. The shim prefix is
       // a host path, so only the arguments are asserted.
       expect((yield* hostCommand("linux", { T3CODE_CLI_PATH: shim })).command).toMatch(
-        / doctor --base-dir 'C:\\Users\\Jane Doe\\\.t3'$/,
+        / doctor --base-dir 'C:\\Users\\Jane Doe\\\.fd-code'$/,
       );
     }).pipe(Effect.scoped),
   );
@@ -232,7 +232,7 @@ it.layer(NodeServices.layer)("manual server installation ownership", (it) => {
       const fs = yield* FileSystem.FileSystem;
       const path = yield* Path.Path;
       const root = yield* fs.makeTempDirectoryScoped();
-      const executable = path.join(root, ".t3/runtime/versions/1.0.0/t3");
+      const executable = path.join(root, ".fd-code/runtime/versions/1.0.0/t3");
       yield* fs.makeDirectory(path.dirname(executable), { recursive: true });
       yield* fs.writeFileString(executable, "");
       for (const [relative, kind] of [
@@ -303,7 +303,7 @@ it.layer(NodeServices.layer)("manual server installation ownership", (it) => {
       const prefix = path.join(root, "bunx-tools");
       const packageRoot = path.join(prefix, "lib/node_modules/fd-code");
       const launcher = path.join(packageRoot, "bin/fd-code.mjs");
-      const executable = path.join(root, ".t3/runtime/versions/1.0.0/t3");
+      const executable = path.join(root, ".fd-code/runtime/versions/1.0.0/t3");
       yield* fs.makeDirectory(path.dirname(launcher), { recursive: true });
       yield* fs.makeDirectory(path.dirname(executable), { recursive: true });
       yield* fs.makeDirectory(path.join(prefix, "bin"));
@@ -340,7 +340,7 @@ it.layer(NodeServices.layer)("manual server installation ownership", (it) => {
       for (const relative of [
         "project/node_modules/fd-code/dist/bin.mjs",
         "project/apps/server/dist/bin.mjs",
-        ".t3/runtime/0.0.45/t3",
+        ".fd-code/runtime/0.0.45/t3",
         "missing/dist/bin.mjs",
       ]) {
         const entry = path.join(root, relative);

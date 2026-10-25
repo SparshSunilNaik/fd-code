@@ -7,6 +7,7 @@ import type {
 import * as Config from "effect/Config";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
+import * as FileSystem from "effect/FileSystem";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Path from "effect/Path";
@@ -144,7 +145,11 @@ function resolveDesktopRuntimeInfo(input: {
 
 const make = Effect.fn("desktop.environment.make")(function* (
   input: MakeDesktopEnvironmentInput,
-): Effect.fn.Return<DesktopEnvironment["Service"], Config.ConfigError, Path.Path> {
+): Effect.fn.Return<
+  DesktopEnvironment["Service"],
+  Config.ConfigError,
+  Path.Path | FileSystem.FileSystem
+> {
   const path = yield* Path.Path;
   const config = yield* DesktopConfig.DesktopConfig;
   const homeDirectory = input.homeDirectory;
@@ -158,11 +163,30 @@ const make = Effect.fn("desktop.environment.make")(function* (
       : input.platform === "darwin"
         ? path.join(homeDirectory, "Library", "Application Support")
         : Option.getOrElse(config.xdgConfigHome, () => path.join(homeDirectory, ".config"));
-  const baseDir = resolveDesktopBaseDir({
+  let baseDir = resolveDesktopBaseDir({
     homeDirectory,
     joinPath: path.join,
     t3Home: config.t3Home,
   });
+  // One-time move from the former `.t3` home to `.fd-code` when the desktop uses
+  // the default location (no explicit T3CODE_HOME). Non-destructive: if the move
+  // cannot happen, the legacy directory keeps being used in place so data is
+  // never lost. Runtime-unverified in this environment (no desktop build here).
+  if (Option.isNone(config.t3Home)) {
+    const fs = yield* FileSystem.FileSystem;
+    const legacy = path.join(homeDirectory, ".t3");
+    const hasNext = yield* fs.exists(baseDir).pipe(Effect.orElseSucceed(() => true));
+    if (!hasNext) {
+      const hasLegacy = yield* fs.exists(legacy).pipe(Effect.orElseSucceed(() => false));
+      if (hasLegacy) {
+        const moved = yield* fs.rename(legacy, baseDir).pipe(
+          Effect.as(true),
+          Effect.orElseSucceed(() => false),
+        );
+        if (!moved) baseDir = legacy;
+      }
+    }
+  }
   const rootDir = path.resolve(input.dirname, "../../..");
   const appRoot = input.isPackaged ? input.appPath : rootDir;
   const serverRoot =

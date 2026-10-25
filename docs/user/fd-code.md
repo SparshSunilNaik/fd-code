@@ -18,7 +18,7 @@ Local Laya is optional. Without it, General chat still works, and explicitly nam
 node scripts/laya-setup.mjs
 ```
 
-The setup installs Laya 0.4.11 in an isolated environment under `~/.t3/laya`, creates a local token and downloads its model cache. For a custom T3 data directory, pass `--home-dir /your/data/directory`. General starts the authenticated loopback service on demand. No model account is needed for Laya. Chat providers still use your own configured accounts.
+The setup installs Laya 0.4.11 in an isolated environment under `~/.fd-code/laya`, creates a local token and downloads its model cache. For a custom T3 data directory, pass `--home-dir /your/data/directory`. General starts the authenticated loopback service on demand. No model account is needed for Laya. Chat providers still use your own configured accounts.
 
 Routing applies to plain-text, single-model messages in the primary desktop/web environment. Messages with attachments, thread context, slash commands, or multiple selected models use the normal chat flow. The separate mobile client has not been given a General navigation control in this release.
 

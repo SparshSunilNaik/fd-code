@@ -9,7 +9,7 @@ import * as NodeProcess from "node:process";
 const { values } = NodeUtil.parseArgs({
   options: {
     python: { type: "string", default: "python3.11" },
-    "home-dir": { type: "string", default: NodePath.join(NodeOS.homedir(), ".t3") },
+    "home-dir": { type: "string", default: NodePath.join(NodeOS.homedir(), ".fd-code") },
   },
 });
 const directory = NodePath.resolve(values["home-dir"], "laya");

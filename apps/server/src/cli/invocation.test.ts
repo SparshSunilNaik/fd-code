@@ -237,7 +237,7 @@ it.layer(NodeServices.layer)("manual server installation ownership", (it) => {
       yield* fs.writeFileString(executable, "");
       for (const [relative, kind] of [
         ["npm/_npx/hash/node_modules/fd-code/dist/bin.mjs", "npx"],
-        ["npm/_npx/hash/node_modules/fd-code/bin/t3.mjs", "npx"],
+        ["npm/_npx/hash/node_modules/fd-code/bin/fd-code.mjs", "npx"],
         ["pnpm/dlx/hash/node_modules/fd-code/dist/bin.mjs", "pnpm-dlx"],
         [".bun/install/cache/t3/dist/bin.mjs", "bunx"],
       ] as const) {
@@ -246,7 +246,7 @@ it.layer(NodeServices.layer)("manual server installation ownership", (it) => {
         yield* fs.writeFileString(entry, "");
         yield* fs.writeFileString(
           path.join(path.dirname(entry), "../package.json"),
-          `{"name":"fd-code","version":"${packageJson.version}","bin":{"fd-code":"./bin/t3.mjs"}}`,
+          `{"name":"fd-code","version":"${packageJson.version}","bin":{"fd-code":"./bin/fd-code.mjs"}}`,
         );
         const launchedBy = entry.endsWith("t3.mjs");
         const installation = yield* resolveServerInstallation.pipe(
@@ -302,7 +302,7 @@ it.layer(NodeServices.layer)("manual server installation ownership", (it) => {
       const root = yield* fs.realPath(yield* fs.makeTempDirectoryScoped());
       const prefix = path.join(root, "bunx-tools");
       const packageRoot = path.join(prefix, "lib/node_modules/fd-code");
-      const launcher = path.join(packageRoot, "bin/t3.mjs");
+      const launcher = path.join(packageRoot, "bin/fd-code.mjs");
       const executable = path.join(root, ".t3/runtime/versions/1.0.0/t3");
       yield* fs.makeDirectory(path.dirname(launcher), { recursive: true });
       yield* fs.makeDirectory(path.dirname(executable), { recursive: true });
@@ -325,7 +325,7 @@ it.layer(NodeServices.layer)("manual server installation ownership", (it) => {
       ] as const) {
         yield* fs.writeFileString(
           path.join(packageRoot, "package.json"),
-          `{"name":"fd-code","version":"${version}","bin":{"fd-code":"./bin/t3.mjs"}}`,
+          `{"name":"fd-code","version":"${version}","bin":{"fd-code":"./bin/fd-code.mjs"}}`,
         );
         expect(yield* resolve).toEqual(expected);
       }

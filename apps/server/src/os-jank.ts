@@ -119,7 +119,24 @@ export const expandHomePath = Effect.fn(function* (input: string) {
 export const resolveBaseDir = Effect.fn(function* (raw: string | undefined) {
   const { join, resolve } = yield* Path.Path;
   if (!raw || raw.trim().length === 0) {
-    return join(yield* HostProcess.HomeDirectory, ".t3");
+    const home = yield* HostProcess.HomeDirectory;
+    const next = join(home, ".fd-code");
+    const legacy = join(home, ".t3");
+    const fs = yield* FileSystem.FileSystem;
+    // One-time move from the former `.t3` home to `.fd-code`. Only when the new
+    // directory does not exist yet and the legacy one does; the rename is atomic
+    // within the home. If it cannot happen (e.g. a server holds the old dir),
+    // keep using the legacy directory in place so data is never lost or stranded.
+    if (!(yield* fs.exists(next).pipe(Effect.orElseSucceed(() => true)))) {
+      if (yield* fs.exists(legacy).pipe(Effect.orElseSucceed(() => false))) {
+        const moved = yield* fs.rename(legacy, next).pipe(
+          Effect.as(true),
+          Effect.orElseSucceed(() => false),
+        );
+        if (!moved) return legacy;
+      }
+    }
+    return next;
   }
   return resolve(yield* expandHomePath(raw.trim()));
 });

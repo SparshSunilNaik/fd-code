@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 /**
- * Builds the `t3` npm package behind `npx fd-code` / `npm i -g t3`: a launcher
- * with no dependencies that downloads this exact version's CLI archive from
- * the GitHub Release on first run (scripts/npm-launcher/t3.mjs).
+ * Builds the `fd-code` npm package behind `npx fd-code` / `npm i -g fd-code`: a
+ * launcher with no dependencies that downloads this exact version's CLI archive
+ * from the GitHub Release on first run (scripts/npm-launcher/fd-code.mjs).
  * The executables are not published to npm. npm's publish-time scanning held
  * 250 MB platform packages back for up to an hour after the launcher went
  * live, and every install in that window ran a launcher with nothing to
  * launch.
  *
- * Output: `<output-dir>/t3/` (the package tree) and `<output-dir>/t3.tgz`,
+ * Output: `<output-dir>/fd-code/` (the package tree) and `<output-dir>/fd-code.tgz`,
  * which is what gets published.
  */
 import * as NodeRuntime from "@effect/platform-node/NodeRuntime";
@@ -28,7 +28,7 @@ import serverPackageJson from "../apps/server/package.json" with { type: "json" 
 
 import { windowsSystemTar } from "./build-cli-archive.ts";
 
-export const NPM_LAUNCHER_PACKAGE_NAME = "t3";
+export const NPM_LAUNCHER_PACKAGE_NAME = "fd-code";
 
 const encodePackageJson = Schema.encodeEffect(fromJsonStringPretty(Schema.Unknown));
 
@@ -47,10 +47,10 @@ export function npmLauncherPackageManifest(version: string) {
     name: NPM_LAUNCHER_PACKAGE_NAME,
     version,
     description:
-      "T3 Code CLI. Downloads the self-contained executable for this platform from the GitHub Release.",
+      "FD CODE CLI. Downloads the self-contained executable for this platform from the GitHub Release.",
     license: serverPackageJson.license,
     repository: serverPackageJson.repository,
-    bin: { t3: "./bin/t3.mjs" },
+    bin: { "fd-code": "./bin/fd-code.mjs" },
     files: ["bin", "dist"],
     engines: { node: ">=20.11" },
   };
@@ -77,8 +77,8 @@ export const buildNpmLauncher = Effect.fn("buildNpmLauncher")(function* (input: 
     path.join(stageDir, "package.json"),
     `${yield* encodePackageJson(npmLauncherPackageManifest(input.version))}\n`,
   );
-  yield* fs.copyFile(path.join(sourceDir, "t3.mjs"), path.join(stageDir, "bin/t3.mjs"));
-  yield* fs.chmod(path.join(stageDir, "bin/t3.mjs"), 0o755);
+  yield* fs.copyFile(path.join(sourceDir, "fd-code.mjs"), path.join(stageDir, "bin/fd-code.mjs"));
+  yield* fs.chmod(path.join(stageDir, "bin/fd-code.mjs"), 0o755);
   yield* fs.copyFile(path.join(sourceDir, "bin.mjs"), path.join(stageDir, "dist/bin.mjs"));
   const readme = yield* path.fromFileUrl(new URL("../apps/server/README.md", import.meta.url));
   if (yield* fs.exists(readme)) {
@@ -115,7 +115,7 @@ const command = Command.make(
     outputDir: Flag.String("output-dir").pipe(Flag.withDefault("npm-packages")),
   },
   buildNpmLauncher,
-).pipe(Command.withDescription("Build the t3 npm launcher package."));
+).pipe(Command.withDescription("Build the fd-code npm launcher package."));
 
 if (import.meta.main) {
   Command.run(command, { version: "0.0.0" }).pipe(

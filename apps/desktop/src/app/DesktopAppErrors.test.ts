@@ -1,7 +1,7 @@
 import { assert, describe, it } from "@effect/vitest";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
-import * as NetService from "@t3tools/shared/Net";
+import * as NetService from "@fdcode/shared/Net";
 
 import {
   DesktopBackendPortUnavailableError,

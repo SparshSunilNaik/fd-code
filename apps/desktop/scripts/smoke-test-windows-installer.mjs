@@ -77,6 +77,26 @@ async function waitForRemoval(resourcePath) {
   throw new Error(`Uninstaller did not remove ${resourcePath}.`);
 }
 
+async function removeTemporaryRoot(root) {
+  const deadline = Date.now() + 30_000;
+  while (true) {
+    try {
+      await NodeFSP.rm(root, { recursive: true, force: true });
+      return;
+    } catch (error) {
+      if (
+        Date.now() >= deadline ||
+        !error ||
+        typeof error !== "object" ||
+        !["EBUSY", "ENOTEMPTY", "EPERM"].includes(error.code)
+      ) {
+        throw error;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 250));
+    }
+  }
+}
+
 async function sha256(filePath) {
   const hash = NodeCrypto.createHash("sha256");
   for await (const chunk of NodeFS.createReadStream(filePath)) hash.update(chunk);
@@ -146,11 +166,7 @@ try {
 
   await runProcess(uninstallerPath, ["/S"], { env: environment });
   installed = false;
-  await waitForRemoval(executablePath);
-  const leftovers = NodeFS.existsSync(installDir) ? await NodeFSP.readdir(installDir) : [];
-  if (leftovers.length > 0) {
-    throw new Error(`Uninstaller left files in the isolated installation: ${leftovers.join(", ")}`);
-  }
+  await waitForRemoval(installDir);
 
   console.log("Windows x64 installer smoke passed:");
   console.log(` - artifact: ${NodePath.basename(installerPath)}`);
@@ -166,5 +182,5 @@ try {
       await runProcess(uninstallerPath, ["/S"], { env: environment }).catch(() => undefined);
     }
   }
-  await NodeFSP.rm(root, { recursive: true, force: true });
+  await removeTemporaryRoot(root);
 }

@@ -59,9 +59,11 @@ export function makeIsolatedEnvironment({ inherited, root, backendPort }) {
     XDG_DATA_HOME: NodePath.join(root, "xdg-data"),
     XDG_STATE_HOME: NodePath.join(root, "xdg-state"),
     PATH:
-      hostPlatform === "darwin"
-        ? "/usr/bin:/bin:/usr/sbin:/sbin"
-        : "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+      hostPlatform === "win32"
+        ? `${inherited.SystemRoot ?? "C:\\Windows"}\\System32;${inherited.SystemRoot ?? "C:\\Windows"}`
+        : hostPlatform === "darwin"
+          ? "/usr/bin:/bin:/usr/sbin:/sbin"
+          : "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
     T3CODE_HOME: t3Home,
     T3CODE_PORT: String(backendPort),
     T3CODE_DISABLE_AUTO_UPDATE: "1",
@@ -185,13 +187,16 @@ async function verifyRenderer(debugPort) {
         rootChildren: document.getElementById("root")?.childElementCount ?? 0
       })`,
     );
-    return state?.readyState === "complete" &&
+    if (
+      state?.readyState === "complete" &&
       state.title === "FD CODE" &&
       state.bridge === "object" &&
       state.bootShell === false &&
       state.rootChildren > 0
-      ? state
-      : false;
+    ) {
+      return state;
+    }
+    throw new Error(`Renderer is not initialized: ${JSON.stringify(state)}`);
   });
 }
 
@@ -201,6 +206,28 @@ function appendOutput(current, chunk) {
 }
 
 function processRows() {
+  if (hostPlatform === "win32") {
+    const result = NodeChildProcess.spawnSync(
+      "powershell.exe",
+      [
+        "-NoLogo",
+        "-NoProfile",
+        "-NonInteractive",
+        "-Command",
+        "Get-CimInstance Win32_Process | Select-Object ProcessId,ParentProcessId,CommandLine | ConvertTo-Json -Compress",
+      ],
+      { encoding: "utf8", windowsHide: true },
+    );
+    if (result.status !== 0) {
+      throw new Error(`Could not inspect Windows process tree: ${result.stderr}`);
+    }
+    const parsed = JSON.parse(result.stdout.trim() || "[]");
+    return (Array.isArray(parsed) ? parsed : [parsed]).map((row) => ({
+      pid: Number(row.ProcessId),
+      parentPid: Number(row.ParentProcessId),
+      command: row.CommandLine ?? "",
+    }));
+  }
   const result = NodeChildProcess.spawnSync("ps", ["-axo", "pid=,ppid=,command="], {
     encoding: "utf8",
   });
@@ -241,7 +268,61 @@ async function listeningPid(port) {
     const pids = [...stdout.matchAll(/pid=(\d+)/g)].map((match) => Number(match[1]));
     return pids.length === 1 ? pids[0] : undefined;
   }
+  if (hostPlatform === "win32") {
+    const { stdout } = await execFile(
+      "powershell.exe",
+      [
+        "-NoLogo",
+        "-NoProfile",
+        "-NonInteractive",
+        "-Command",
+        `(Get-NetTCPConnection -LocalPort ${port} -State Listen -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique) | ConvertTo-Json -Compress`,
+      ],
+      { windowsHide: true },
+    );
+    const parsed = JSON.parse(stdout.trim() || "[]");
+    const pids = (Array.isArray(parsed) ? parsed : [parsed]).map(Number);
+    return pids.length === 1 ? pids[0] : undefined;
+  }
   return undefined;
+}
+
+async function closeElectron(child, debugPort) {
+  if (hostPlatform !== "win32") {
+    process.kill(child.pid, "SIGTERM");
+    return;
+  }
+  const response = await fetch(`http://127.0.0.1:${debugPort}/json/version`, {
+    signal: AbortSignal.timeout(2_000),
+  });
+  const version = await response.json();
+  if (!response.ok || typeof version.webSocketDebuggerUrl !== "string") {
+    throw new Error("Could not resolve the Electron browser target for clean shutdown.");
+  }
+  const socket = new WebSocket(version.webSocketDebuggerUrl);
+  await new Promise((resolve, reject) => {
+    socket.addEventListener("open", resolve, { once: true });
+    socket.addEventListener("error", () => reject(new Error("Browser CDP connection failed.")), {
+      once: true,
+    });
+  });
+  await new Promise((resolve, reject) => {
+    const timeout = setTimeout(
+      () => reject(new Error("Electron did not acknowledge the browser close request.")),
+      5_000,
+    );
+    const complete = () => {
+      clearTimeout(timeout);
+      resolve();
+    };
+    socket.addEventListener("message", (event) => {
+      const message = JSON.parse(String(event.data));
+      if (message.id === 1) complete();
+    });
+    socket.addEventListener("close", complete, { once: true });
+    socket.send(JSON.stringify({ id: 1, method: "Browser.close" }));
+  });
+  socket.close();
 }
 
 async function waitForProcessExit(child, timeoutMs = DEFAULT_TIMEOUT_MS) {
@@ -352,7 +433,7 @@ async function launchOnce({
     await onReady?.({ descriptor, renderer });
 
     const trackedChildren = descendantPids(child.pid, processRows());
-    process.kill(child.pid, "SIGTERM");
+    await closeElectron(child, debugPort);
     const exit = await waitForProcessExit(child);
     if (exit.code !== 0 || exit.signal !== null) {
       throw new Error(
@@ -364,7 +445,13 @@ async function launchOnce({
   } catch (error) {
     if (child.exitCode === null && child.signalCode === null) {
       try {
-        process.kill(hostPlatform === "win32" ? child.pid : -child.pid, "SIGKILL");
+        if (hostPlatform === "win32") {
+          NodeChildProcess.spawnSync("taskkill.exe", ["/PID", String(child.pid), "/T", "/F"], {
+            windowsHide: true,
+          });
+        } else {
+          process.kill(-child.pid, "SIGKILL");
+        }
       } catch {}
       await waitForProcessExit(child, 5_000).catch(() => undefined);
     }
@@ -398,7 +485,8 @@ export async function runDesktopLifecycleSmoke({
     );
   }
 
-  const root = await NodeFSP.mkdtemp(NodePath.join(NodeOS.tmpdir(), "fd-code-desktop-smoke-"));
+  // Keep this short because macOS limits Unix-domain socket paths to 103 bytes.
+  const root = await NodeFSP.mkdtemp(NodePath.join(NodeOS.tmpdir(), "fds-"));
   assertOwnedTemporaryRoot(root);
   const backendPort = await reservePort();
   const debugPort = await reservePort();
